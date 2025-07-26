@@ -21,6 +21,10 @@ function Model({ url }: { url: string }) {
 }
 
 export function STLViewer({ stlDataUri }: { stlDataUri: string }) {
+  if (!stlDataUri) {
+    return null;
+  }
+  
   return (
     <Canvas camera={{ position: [0, 100, 200], fov: 35 }}>
       <ambientLight intensity={Math.PI / 2} />
