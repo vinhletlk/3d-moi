@@ -9,9 +9,8 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight } from "lucide-react";
+import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight, File3d } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { STLViewer } from "@/components/ui/stl-viewer";
 
 type PrintTechnology = "fdm" | "resin";
 
@@ -207,9 +206,11 @@ export default function Home() {
               {results && !isLoading && (
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                   <div className="space-y-6">
-                     <div className="aspect-square w-full bg-secondary/30 rounded-lg border border-border overflow-hidden">
-                       <STLViewer stlDataUri={stlDataUri} />
-                     </div>
+                     <Card className="aspect-square w-full bg-secondary/30 rounded-lg border border-border flex flex-col items-center justify-center">
+                        <File3d className="w-24 h-24 text-primary/50" />
+                        <p className="text-lg font-semibold mt-4 text-foreground">{fileName}</p>
+                        <p className="text-sm text-muted-foreground">Tệp đã tải lên</p>
+                     </Card>
                   </div>
                   <div className="space-y-8">
                     <div className="space-y-6">
