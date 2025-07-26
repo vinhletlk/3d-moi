@@ -129,8 +129,14 @@ export class StlParser {
   parse(buffer: Buffer): { volume: number; surfaceArea: number } {
     // Check for ASCII STL by looking for 'solid' at the start
     const isAscii = buffer.toString('utf8', 0, 5).toLowerCase() === 'solid';
+
     if (isAscii) {
-      return this.parseAscii(buffer);
+       // Check if the file contains the word "vertex" to be sure it's an ASCII file
+       // Some binary files might start with "solid" by chance.
+       const textSample = buffer.toString('utf8', 0, 500);
+       if (textSample.includes('vertex')) {
+        return this.parseAscii(buffer);
+       }
     }
 
     return this.parseBinary(buffer);
