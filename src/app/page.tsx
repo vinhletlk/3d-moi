@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets } from "lucide-react";
 
@@ -24,6 +25,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [fileName, setFileName] = useState<string>("");
   const [technology, setTechnology] = useState<PrintTechnology>("fdm");
+  const [infillPercentage, setInfillPercentage] = useState<number>(20);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [stlDataUri, setStlDataUri] = useState<string>("");
@@ -96,7 +98,7 @@ export default function Home() {
 
     const density = technology === "fdm" ? DENSITY_FDM : DENSITY_RESIN;
     const costPerGram = technology === "fdm" ? COST_PER_GRAM_FDM : COST_PER_GRAM_RESIN;
-    const weight = results.volume * density;
+    const weight = results.volume * density * (infillPercentage / 100);
     const totalCost = weight * costPerGram;
 
     return { weight, totalCost, costPerGram };
@@ -197,6 +199,21 @@ export default function Home() {
                     </Label>
                   </div>
                 </RadioGroup>
+              </div>
+
+               <div className="space-y-3">
+                <Label className="text-base" htmlFor="infill">Độ rỗng (Infill)</Label>
+                <div className="flex items-center space-x-4">
+                  <Slider
+                    id="infill"
+                    value={[infillPercentage]}
+                    onValueChange={(value) => setInfillPercentage(value[0])}
+                    max={100}
+                    step={5}
+                    className="flex-1"
+                  />
+                  <span className="text-lg font-bold w-16 text-right text-primary">{infillPercentage}%</span>
+                </div>
               </div>
 
 
