@@ -11,6 +11,7 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { STLViewer } from "@/components/ui/stl-viewer";
 
 type PrintTechnology = "fdm" | "resin";
 
@@ -163,7 +164,7 @@ export default function Home() {
         </div>
       </header>
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <Card className="w-full shadow-lg rounded-xl overflow-hidden border-border bg-card/50">
             <CardHeader className="text-center p-8">
               <CardTitle className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
@@ -204,8 +205,13 @@ export default function Home() {
               )}
               
               {results && !isLoading && (
-                <div className="space-y-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                  <div className="space-y-6">
+                     <div className="aspect-square w-full bg-secondary/30 rounded-lg border border-border overflow-hidden">
+                       <STLViewer stlDataUri={stlDataUri} />
+                     </div>
+                  </div>
+                  <div className="space-y-8">
                     <div className="space-y-6">
                       <h3 className="text-lg font-semibold text-foreground border-b pb-2">Thông số mô hình</h3>
                       <div className="grid grid-cols-2 gap-4">
