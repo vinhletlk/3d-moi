@@ -1,22 +1,19 @@
 "use client";
 
-import { useState, useRef, type ChangeEvent, Suspense } from "react";
+import { useState, useRef, type ChangeEvent } from "react";
 import { calculateVolume, type CalculateVolumeOutput } from "@/ai/flows/calculate-volume-from-stl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, LoaderCircle, Ruler, Shell, DollarSign, RefreshCw, Scale, Orbit } from "lucide-react";
-import { STLViewer } from "@/components/ui/stl-viewer";
+import { Upload, LoaderCircle, Ruler, Shell, DollarSign, RefreshCw, Scale } from "lucide-react";
 
 export default function Home() {
   const [results, setResults] = useState<CalculateVolumeOutput | null>(null);
   const [costPerCm3, setCostPerCm3] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [fileName, setFileName] = useState<string>("");
-  const [stlDataUri, setStlDataUri] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -37,14 +34,12 @@ export default function Home() {
     setIsLoading(true);
     setResults(null);
     setCostPerCm3("");
-    setStlDataUri(null);
 
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = async () => {
       try {
         const dataUri = reader.result as string;
-        setStlDataUri(dataUri);
         const calculationResult = await calculateVolume({ stlDataUri: dataUri });
         setResults(calculationResult);
       } catch (error: any) {
@@ -80,7 +75,6 @@ export default function Home() {
     setCostPerCm3("");
     setIsLoading(false);
     setFileName("");
-    setStlDataUri(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -127,76 +121,57 @@ export default function Home() {
             </div>
           )}
           
-          {results && !isLoading && stlDataUri &&(
-             <Tabs defaultValue="cost" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="cost">
-                  <DollarSign className="mr-2 h-4 w-4" />
-                  Chi phí
-                </TabsTrigger>
-                <TabsTrigger value="viewer">
-                  <Orbit className="mr-2 h-4 w-4" />
-                  Trình xem 3D
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="cost" className="pt-4 space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Card className="bg-secondary/50">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Khối lượng</CardTitle>
-                      <Ruler className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
-                        {results.volume.toFixed(2)} <span className="text-lg text-muted-foreground">cm³</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-secondary/50">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Diện tích bề mặt</CardTitle>
-                      <Shell className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
-                        {results.surfaceArea.toFixed(2)} <span className="text-lg text-muted-foreground">cm²</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+          {results && !isLoading && (
+            <div className="pt-4 space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Card className="bg-secondary/50">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Khối lượng</CardTitle>
+                    <Ruler className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {results.volume.toFixed(2)} <span className="text-lg text-muted-foreground">cm³</span>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-secondary/50">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Diện tích bề mặt</CardTitle>
+                    <Shell className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {results.surfaceArea.toFixed(2)} <span className="text-lg text-muted-foreground">cm²</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="cost" className="text-base">Chi phí mỗi cm³</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      id="cost"
-                      type="number"
-                      value={costPerCm3}
-                      onChange={(e) => setCostPerCm3(e.target.value)}
-                      placeholder="ví dụ: 0.25"
-                      className="pl-10 text-base"
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
+              <div className="space-y-2">
+                <Label htmlFor="cost" className="text-base">Chi phí mỗi cm³</Label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    id="cost"
+                    type="number"
+                    value={costPerCm3}
+                    onChange={(e) => setCostPerCm3(e.target.value)}
+                    placeholder="ví dụ: 0.25"
+                    className="pl-10 text-base"
+                    min="0"
+                    step="0.01"
+                  />
                 </div>
+              </div>
 
-                <div className="bg-accent/20 border border-accent rounded-lg p-4 text-center">
-                  <Label className="text-base font-semibold text-accent-foreground/90">Tổng chi phí ước tính</Label>
-                  <div className="text-4xl font-extrabold text-accent-foreground" style={{color: 'hsl(var(--accent))'}}>
-                    $ {totalCost.toFixed(2)}
-                  </div>
+              <div className="bg-accent/20 border border-accent rounded-lg p-4 text-center">
+                <Label className="text-base font-semibold text-accent-foreground/90">Tổng chi phí ước tính</Label>
+                <div className="text-4xl font-extrabold text-accent-foreground" style={{color: 'hsl(var(--accent))'}}>
+                  $ {totalCost.toFixed(2)}
                 </div>
-              </TabsContent>
-              <TabsContent value="viewer" className="pt-4">
-                <div className="aspect-square w-full rounded-lg border bg-secondary/30">
-                  <Suspense fallback={<div className="flex h-full items-center justify-center"><LoaderCircle className="w-8 h-8 animate-spin" /></div>}>
-                    <STLViewer stlDataUri={stlDataUri} />
-                  </Suspense>
-                </div>
-              </TabsContent>
-            </Tabs>
+              </div>
+            </div>
           )}
         </CardContent>
         { (fileName || results) && !isLoading && (
