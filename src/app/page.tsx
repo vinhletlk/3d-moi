@@ -150,177 +150,204 @@ export default function Home() {
   const { weight, totalCost, costPerGram } = calculateCost();
 
   return (
-    <main className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4 sm:p-8">
-      <Card className="w-full max-w-lg shadow-2xl rounded-xl overflow-hidden">
-        <CardHeader className="text-center bg-card p-6">
-           <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4 shadow-lg">
-            <Scale className="w-8 h-8" />
+    <div className="min-h-screen w-full bg-background font-sans text-foreground">
+      <header className="bg-card border-b border-border">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+                <div className="flex items-center space-x-2">
+                    <Scale className="w-8 h-8 text-primary" />
+                    <h1 className="text-2xl font-bold text-foreground">in3D</h1>
+                </div>
+                <Button variant="ghost">Đăng nhập</Button>
+            </div>
+        </div>
+      </header>
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div className="max-w-3xl mx-auto">
+          <Card className="w-full shadow-lg rounded-xl overflow-hidden border-border">
+            <CardHeader className="text-center p-8 bg-card">
+              <CardTitle className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+                Ước tính chi phí in 3D
+              </CardTitle>
+              <CardDescription className="text-lg text-muted-foreground mt-2 max-w-2xl mx-auto">
+                Tải lên tệp .STL của bạn để nhận ngay báo giá tức thì cho cả in FDM và Resin.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6 sm:p-8 space-y-8">
+              {!fileName && !isLoading && (
+                <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-border rounded-lg text-center transition-colors hover:border-primary hover:bg-accent">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept=".stl"
+                  />
+                  <div className="mb-4 text-primary">
+                    <Upload className="h-12 w-12" />
+                  </div>
+                  <Button onClick={handleUploadClick} size="lg" className="font-bold">
+                    Chọn tệp STL từ máy tính
+                  </Button>
+                  <p className="text-sm text-muted-foreground mt-3">hoặc kéo và thả tệp vào đây</p>
+                  <p className="text-xs text-muted-foreground mt-4">Hỗ trợ STL nhị phân. Kích thước tối đa 50MB.</p>
+                </div>
+              )}
+
+              {isLoading && (
+                <div className="flex flex-col items-center justify-center space-y-4 p-6 min-h-[200px]">
+                  <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
+                  <p className="text-xl font-semibold">Đang xử lý <span className="font-bold text-primary">{fileName}</span></p>
+                  <Progress value={progress} className="w-full max-w-sm" />
+                  <p className="text-sm text-muted-foreground">Quá trình này có thể mất một chút thời gian...</p>
+                </div>
+              )}
+              
+              {results && !isLoading && (
+                <div className="space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-semibold text-foreground border-b pb-2">Thông số mô hình</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Card className="bg-secondary/30">
+                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Khối lượng</CardTitle>
+                            <Ruler className="h-4 w-4 text-muted-foreground" />
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-2xl font-bold">
+                              {results.volume.toFixed(2)} <span className="text-base font-normal text-muted-foreground">cm³</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                        <Card className="bg-secondary/30">
+                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Bề mặt</CardTitle>
+                            <Shell className="h-4 w-4 text-muted-foreground" />
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-2xl font-bold">
+                              {results.surfaceArea.toFixed(2)} <span className="text-base font-normal text-muted-foreground">cm²</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold text-foreground border-b pb-2">Tùy chọn in</h3>
+                         <div className="space-y-3">
+                          <Label className="text-base font-medium">Công nghệ in</Label>
+                          <RadioGroup
+                            value={technology}
+                            onValueChange={(value) => setTechnology(value as PrintTechnology)}
+                            className="grid grid-cols-2 gap-4"
+                          >
+                            <div>
+                              <RadioGroupItem value="fdm" id="fdm" className="peer sr-only" />
+                              <Label
+                                htmlFor="fdm"
+                                className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                              >
+                                <Atom className="mb-2 h-6 w-6" />
+                                FDM
+                              </Label>
+                            </div>
+                            <div>
+                              <RadioGroupItem value="resin" id="resin" className="peer sr-only" />
+                              <Label
+                                htmlFor="resin"
+                                className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                              >
+                                <Droplets className="mb-2 h-6 w-6" />
+                                Resin
+                              </Label>
+                            </div>
+                          </RadioGroup>
+                        </div>
+                        {technology === 'fdm' && (
+                          <div className="space-y-3 pt-2">
+                            <Label className="text-base font-medium flex items-center" htmlFor="infill">
+                              <Percent className="mr-2 h-4 w-4" />
+                              Độ rỗng (Infill)
+                            </Label>
+                            <div className="flex items-center space-x-4">
+                              <Slider
+                                id="infill"
+                                value={[infillPercentage]}
+                                onValueChange={(value) => setInfillPercentage(value[0])}
+                                max={100}
+                                step={5}
+                                className="flex-1"
+                              />
+                              <span className="text-lg font-bold w-16 text-right text-primary">{infillPercentage}%</span>
+                            </div>
+                          </div>
+                        )}
+                        {technology === 'resin' && (
+                          <div className="space-y-3 pt-2">
+                             <Label className="text-base font-medium flex items-center" htmlFor="shell">
+                               <Contrast className="mr-2 h-4 w-4" />
+                               Độ dày vỏ (Shell)
+                            </Label>
+                            <div className="flex items-center space-x-4">
+                              <Slider
+                                id="shell"
+                                value={[shellThickness]}
+                                onValueChange={(value) => setShellThickness(value[0])}
+                                max={10}
+                                step={0.1}
+                                className="flex-1"
+                              />
+                              <span className="text-lg font-bold w-16 text-right text-primary">{shellThickness.toFixed(1)} mm</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-6">
+                       <h3 className="text-lg font-semibold text-foreground border-b pb-2">Báo giá ước tính</h3>
+                       <Card className="bg-secondary/30">
+                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Cân nặng ước tính</CardTitle>
+                            <Weight className="h-4 w-4 text-muted-foreground" />
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-2xl font-bold">
+                              {weight.toFixed(2)} <span className="text-base font-normal text-muted-foreground">g</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                       <div className="bg-gradient-to-br from-primary/80 to-primary rounded-lg p-6 text-center text-primary-foreground shadow-xl">
+                        <Label className="text-lg font-semibold opacity-90">Tổng chi phí</Label>
+                        <div className="text-5xl font-extrabold tracking-tight mt-1">
+                          {totalCost.toLocaleString('vi-VN', { maximumFractionDigits: 0, minimumFractionDigits: 0 })} đ
+                        </div>
+                         <p className="text-sm opacity-80 mt-2">
+                          (@ {costPerGram.toLocaleString('vi-VN')} đ/g)
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+            { (fileName || results) && !isLoading && (
+              <CardFooter className="p-6 sm:p-8 bg-card border-t">
+                 <Button onClick={handleReset} variant="outline" className="w-full font-semibold">
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Tính toán lại với tệp khác
+                </Button>
+              </CardFooter>
+            )}
+          </Card>
+        </div>
+      </main>
+      <footer className="bg-card border-t mt-auto">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-sm text-muted-foreground">
+              © {new Date().getFullYear()} in3D. All rights reserved.
           </div>
-          <CardTitle className="text-3xl font-bold text-primary">Máy tính chi phí in3D</CardTitle>
-          <CardDescription className="text-md pt-1">
-            Tải lên tệp .STL để tính toán khối lượng và ước tính chi phí in.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-6 space-y-6">
-          {!fileName && !isLoading && (
-            <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-lg text-center">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-                accept=".stl"
-              />
-              <Button onClick={handleUploadClick} size="lg">
-                <Upload className="mr-2 h-5 w-5" />
-                Tải lên tệp STL
-              </Button>
-              <p className="text-sm text-muted-foreground mt-2">Khuyến nghị STL nhị phân. Tối đa 50MB.</p>
-            </div>
-          )}
-
-          {isLoading && (
-            <div className="flex flex-col items-center justify-center space-y-4 p-6 min-h-[200px]">
-              <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-lg font-medium">Đang xử lý <span className="font-bold text-primary">{fileName}</span>...</p>
-              <Progress value={progress} className="w-[60%]" />
-              <p className="text-sm text-muted-foreground">Quá trình này có thể mất một chút thời gian.</p>
-            </div>
-          )}
-          
-          {results && !isLoading && (
-            <div className="pt-4 space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Card className="bg-secondary/50">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Khối lượng tổng thể</CardTitle>
-                    <Ruler className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {results.volume.toFixed(2)} <span className="text-lg text-muted-foreground">cm³</span>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-secondary/50">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Diện tích bề mặt</CardTitle>
-                    <Shell className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {results.surfaceArea.toFixed(2)} <span className="text-lg text-muted-foreground">cm²</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-               <div className="space-y-3">
-                <Label className="text-base">Công nghệ in</Label>
-                <RadioGroup
-                  value={technology}
-                  onValueChange={(value) => setTechnology(value as PrintTechnology)}
-                  className="grid grid-cols-2 gap-4"
-                >
-                  <div>
-                    <RadioGroupItem value="fdm" id="fdm" className="peer sr-only" />
-                    <Label
-                      htmlFor="fdm"
-                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-                    >
-                      <Atom className="mb-3 h-6 w-6" />
-                      FDM
-                    </Label>
-                  </div>
-                  <div>
-                    <RadioGroupItem value="resin" id="resin" className="peer sr-only" />
-                    <Label
-                      htmlFor="resin"
-                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-                    >
-                      <Droplets className="mb-3 h-6 w-6" />
-                      Resin
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              {technology === 'fdm' && (
-                <div className="space-y-3">
-                  <Label className="text-base flex items-center" htmlFor="infill">
-                    <Percent className="mr-2 h-4 w-4" />
-                    Độ rỗng (Infill)
-                  </Label>
-                  <div className="flex items-center space-x-4">
-                    <Slider
-                      id="infill"
-                      value={[infillPercentage]}
-                      onValueChange={(value) => setInfillPercentage(value[0])}
-                      max={100}
-                      step={5}
-                      className="flex-1"
-                    />
-                    <span className="text-lg font-bold w-16 text-right text-primary">{infillPercentage}%</span>
-                  </div>
-                </div>
-              )}
-
-              {technology === 'resin' && (
-                <div className="space-y-3">
-                   <Label className="text-base flex items-center" htmlFor="shell">
-                     <Contrast className="mr-2 h-4 w-4" />
-                     Độ dày vỏ (Shell)
-                  </Label>
-                  <div className="flex items-center space-x-4">
-                    <Slider
-                      id="shell"
-                      value={[shellThickness]}
-                      onValueChange={(value) => setShellThickness(value[0])}
-                      max={10}
-                      step={0.1}
-                      className="flex-1"
-                    />
-                    <span className="text-lg font-bold w-16 text-right text-primary">{shellThickness.toFixed(1)} mm</span>
-                  </div>
-                </div>
-              )}
-
-              <Card className="bg-secondary/50">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Cân nặng ước tính</CardTitle>
-                    <Weight className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {weight.toFixed(2)} <span className="text-lg text-muted-foreground">g</span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-
-              <div className="bg-accent/20 border border-accent rounded-lg p-4 text-center">
-                <Label className="text-base font-semibold text-accent-foreground/90">Tổng chi phí ước tính</Label>
-                <div className="text-4xl font-extrabold" style={{color: 'hsl(var(--accent))'}}>
-                  {totalCost.toLocaleString('vi-VN', { maximumFractionDigits: 0, minimumFractionDigits: 0 })} đ
-                </div>
-                 <p className="text-sm text-muted-foreground mt-1">
-                  (@ {costPerGram.toLocaleString('vi-VN')} đ/g)
-                </p>
-              </div>
-            </div>
-          )}
-        </CardContent>
-        { (fileName || results) && !isLoading && (
-          <CardFooter className="p-6 pt-0">
-             <Button onClick={handleReset} variant="outline" className="w-full">
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Tính toán tệp khác
-            </Button>
-          </CardFooter>
-        )}
-      </Card>
-    </main>
+      </footer>
+    </div>
   );
 }
-
-    
