@@ -301,7 +301,7 @@ export default function Home() {
               <div className="bg-accent/20 border border-accent rounded-lg p-4 text-center">
                 <Label className="text-base font-semibold text-accent-foreground/90">Tổng chi phí ước tính</Label>
                 <div className="text-4xl font-extrabold" style={{color: 'hsl(var(--accent))'}}>
-                  {(totalCost / 1000).toLocaleString('vi-VN', { maximumFractionDigits: 0, minimumFractionDigits: 0 })} kđ
+                  {totalCost.toLocaleString('vi-VN', { maximumFractionDigits: 0, minimumFractionDigits: 0 })} đ
                 </div>
                  <p className="text-sm text-muted-foreground mt-1">
                   (@ {costPerGram.toLocaleString('vi-VN')} đ/g)
