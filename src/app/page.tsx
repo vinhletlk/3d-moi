@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, type ChangeEvent } from "react";
+import { useState, useRef, type ChangeEvent, useEffect } from "react";
 import { calculateVolume, type CalculateVolumeOutput } from "@/ai/flows/calculate-volume-from-stl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 type PrintTechnology = "fdm" | "resin";
 
@@ -30,6 +31,25 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [stlDataUri, setStlDataUri] = useState<string>("");
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isLoading) {
+      setProgress(0);
+      let progressValue = 0;
+      timer = setInterval(() => {
+        progressValue += 5;
+        if (progressValue > 95) {
+           clearInterval(timer);
+        }
+        setProgress(progressValue);
+      }, 100);
+    }
+    return () => {
+      clearInterval(timer);
+    };
+  }, [isLoading]);
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -55,7 +75,11 @@ export default function Home() {
         const dataUri = reader.result as string;
         setStlDataUri(dataUri);
         const calculationResult = await calculateVolume({ stlDataUri: dataUri });
-        setResults(calculationResult);
+        setProgress(100);
+        setTimeout(() => {
+          setResults(calculationResult);
+          setIsLoading(false);
+        }, 300);
       } catch (error: any) {
         console.error(error);
         toast({
@@ -64,7 +88,6 @@ export default function Home() {
           description: error.message || "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.",
         });
         setFileName("");
-      } finally {
         setIsLoading(false);
       }
     };
@@ -89,6 +112,7 @@ export default function Home() {
     setIsLoading(false);
     setFileName("");
     setStlDataUri("");
+    setProgress(0);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -157,9 +181,10 @@ export default function Home() {
 
           {isLoading && (
             <div className="flex flex-col items-center justify-center space-y-4 p-6 min-h-[200px]">
-              <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
-              <p className="text-lg font-medium">Đang tính khối lượng cho <span className="font-bold text-primary">{fileName}</span>...</p>
-              <p className="text-muted-foreground">Quá trình này có thể mất một chút thời gian.</p>
+              <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-lg font-medium">Đang xử lý <span className="font-bold text-primary">{fileName}</span>...</p>
+              <Progress value={progress} className="w-[60%]" />
+              <p className="text-sm text-muted-foreground">Quá trình này có thể mất một chút thời gian.</p>
             </div>
           )}
           
@@ -276,7 +301,7 @@ export default function Home() {
               <div className="bg-accent/20 border border-accent rounded-lg p-4 text-center">
                 <Label className="text-base font-semibold text-accent-foreground/90">Tổng chi phí ước tính</Label>
                 <div className="text-4xl font-extrabold" style={{color: 'hsl(var(--accent))'}}>
-                  {(totalCost).toLocaleString('vi-VN', { maximumFractionDigits: 0, minimumFractionDigits: 0 })} đ
+                  {(totalCost / 1000).toLocaleString('vi-VN', { maximumFractionDigits: 0, minimumFractionDigits: 0 })} kđ
                 </div>
                  <p className="text-sm text-muted-foreground mt-1">
                   (@ {costPerGram.toLocaleString('vi-VN')} đ/g)
@@ -297,3 +322,5 @@ export default function Home() {
     </main>
   );
 }
+
+    
