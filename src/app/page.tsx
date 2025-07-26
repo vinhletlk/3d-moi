@@ -24,8 +24,8 @@ export default function Home() {
     if (!file.name.toLowerCase().endsWith('.stl')) {
       toast({
         variant: "destructive",
-        title: "Invalid File Type",
-        description: "Please upload a valid .stl file.",
+        title: "Loại tệp không hợp lệ",
+        description: "Vui lòng tải lên một tệp .stl hợp lệ.",
       });
       return;
     }
@@ -46,8 +46,8 @@ export default function Home() {
         console.error(error);
         toast({
           variant: "destructive",
-          title: "Calculation Failed",
-          description: error.message || "An unexpected error occurred. Please try again.",
+          title: "Tính toán thất bại",
+          description: error.message || "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.",
         });
         setFileName("");
       } finally {
@@ -58,8 +58,8 @@ export default function Home() {
         console.error("FileReader error:", error);
         toast({
           variant: "destructive",
-          title: "File Read Error",
-          description: "Could not read the selected file.",
+          title: "Lỗi đọc tệp",
+          description: "Không thể đọc tệp đã chọn.",
         });
         setIsLoading(false);
         setFileName("");
@@ -90,9 +90,9 @@ export default function Home() {
            <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4 shadow-lg">
             <Scale className="w-8 h-8" />
           </div>
-          <CardTitle className="text-3xl font-bold text-primary">in3D Cost Calculator</CardTitle>
+          <CardTitle className="text-3xl font-bold text-primary">Máy tính chi phí in3D</CardTitle>
           <CardDescription className="text-md pt-1">
-            Upload a .STL file to calculate its volume and estimate printing costs.
+            Tải lên tệp .STL để tính toán khối lượng và ước tính chi phí in.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-6 space-y-6">
@@ -107,17 +107,17 @@ export default function Home() {
               />
               <Button onClick={handleUploadClick} size="lg">
                 <Upload className="mr-2 h-5 w-5" />
-                Upload STL File
+                Tải lên tệp STL
               </Button>
-              <p className="text-sm text-muted-foreground mt-2">Binary STL recommended. Max 50MB.</p>
+              <p className="text-sm text-muted-foreground mt-2">Khuyến nghị STL nhị phân. Tối đa 50MB.</p>
             </div>
           )}
 
           {isLoading && (
             <div className="flex flex-col items-center justify-center space-y-4 p-6 min-h-[200px]">
               <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
-              <p className="text-lg font-medium">Calculating volume for <span className="font-bold text-primary">{fileName}</span>...</p>
-              <p className="text-muted-foreground">This may take a moment.</p>
+              <p className="text-lg font-medium">Đang tính khối lượng cho <span className="font-bold text-primary">{fileName}</span>...</p>
+              <p className="text-muted-foreground">Quá trình này có thể mất một chút thời gian.</p>
             </div>
           )}
           
@@ -126,7 +126,7 @@ export default function Home() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Card className="bg-secondary/50">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Volume</CardTitle>
+                    <CardTitle className="text-sm font-medium">Khối lượng</CardTitle>
                     <Ruler className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
@@ -137,7 +137,7 @@ export default function Home() {
                 </Card>
                 <Card className="bg-secondary/50">
                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Surface Area</CardTitle>
+                    <CardTitle className="text-sm font-medium">Diện tích bề mặt</CardTitle>
                     <Shell className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
@@ -149,7 +149,7 @@ export default function Home() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="cost" className="text-base">Cost per cm³</Label>
+                <Label htmlFor="cost" className="text-base">Chi phí mỗi cm³</Label>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
@@ -157,7 +157,7 @@ export default function Home() {
                     type="number"
                     value={costPerCm3}
                     onChange={(e) => setCostPerCm3(e.target.value)}
-                    placeholder="e.g., 0.25"
+                    placeholder="ví dụ: 0.25"
                     className="pl-10 text-base"
                     min="0"
                     step="0.01"
@@ -166,7 +166,7 @@ export default function Home() {
               </div>
 
               <div className="bg-accent/20 border border-accent rounded-lg p-4 text-center">
-                <Label className="text-base font-semibold text-accent-foreground/90">Total Estimated Cost</Label>
+                <Label className="text-base font-semibold text-accent-foreground/90">Tổng chi phí ước tính</Label>
                 <div className="text-4xl font-extrabold text-accent-foreground" style={{color: 'hsl(var(--accent))'}}>
                   $ {totalCost.toFixed(2)}
                 </div>
@@ -178,7 +178,7 @@ export default function Home() {
           <CardFooter className="p-6 pt-0">
              <Button onClick={handleReset} variant="outline" className="w-full">
               <RefreshCw className="mr-2 h-4 w-4" />
-              Calculate Another File
+              Tính toán tệp khác
             </Button>
           </CardFooter>
         )}
