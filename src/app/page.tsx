@@ -6,14 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, LoaderCircle, Ruler, Shell, DollarSign, RefreshCw, Scale } from "lucide-react";
+import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets } from "lucide-react";
+
+type PrintTechnology = "fdm" | "resin";
+
+// Approximate densities (g/cm³)
+const DENSITY_FDM = 1.25; // e.g., PLA plastic
+const DENSITY_RESIN = 1.15; // e.g., standard resin
+
+const COST_PER_GRAM_FDM = 1000;
+const COST_PER_GRAM_RESIN = 4000;
 
 export default function Home() {
   const [results, setResults] = useState<CalculateVolumeOutput | null>(null);
-  const [costPerCm3, setCostPerCm3] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [fileName, setFileName] = useState<string>("");
+  const [technology, setTechnology] = useState<PrintTechnology>("fdm");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -33,7 +43,6 @@ export default function Home() {
     setFileName(file.name);
     setIsLoading(true);
     setResults(null);
-    setCostPerCm3("");
 
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -72,7 +81,6 @@ export default function Home() {
 
   const handleReset = () => {
     setResults(null);
-    setCostPerCm3("");
     setIsLoading(false);
     setFileName("");
     if (fileInputRef.current) {
@@ -80,8 +88,18 @@ export default function Home() {
     }
   };
   
-  const parsedCost = parseFloat(costPerCm3);
-  const totalCost = results?.volume && !isNaN(parsedCost) ? results.volume * parsedCost : 0;
+  const calculateCost = () => {
+    if (!results) return { weight: 0, totalCost: 0, costPerGram: 0 };
+
+    const density = technology === "fdm" ? DENSITY_FDM : DENSITY_RESIN;
+    const costPerGram = technology === "fdm" ? COST_PER_GRAM_FDM : COST_PER_GRAM_RESIN;
+    const weight = results.volume * density;
+    const totalCost = weight * costPerGram;
+
+    return { weight, totalCost, costPerGram };
+  };
+
+  const { weight, totalCost, costPerGram } = calculateCost();
 
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4 sm:p-8">
@@ -148,28 +166,45 @@ export default function Home() {
                 </Card>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="cost" className="text-base">Chi phí mỗi cm³</Label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    id="cost"
-                    type="number"
-                    value={costPerCm3}
-                    onChange={(e) => setCostPerCm3(e.target.value)}
-                    placeholder="ví dụ: 0.25"
-                    className="pl-10 text-base"
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
+               <div className="space-y-3">
+                <Label className="text-base">Công nghệ in</Label>
+                <RadioGroup
+                  value={technology}
+                  onValueChange={(value) => setTechnology(value as PrintTechnology)}
+                  className="grid grid-cols-2 gap-4"
+                >
+                  <div>
+                    <RadioGroupItem value="fdm" id="fdm" className="peer sr-only" />
+                    <Label
+                      htmlFor="fdm"
+                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    >
+                      <Atom className="mb-3 h-6 w-6" />
+                      FDM
+                    </Label>
+                  </div>
+                  <div>
+                    <RadioGroupItem value="resin" id="resin" className="peer sr-only" />
+                    <Label
+                      htmlFor="resin"
+                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    >
+                      <Droplets className="mb-3 h-6 w-6" />
+                      Resin
+                    </Label>
+                  </div>
+                </RadioGroup>
               </div>
+
 
               <div className="bg-accent/20 border border-accent rounded-lg p-4 text-center">
                 <Label className="text-base font-semibold text-accent-foreground/90">Tổng chi phí ước tính</Label>
-                <div className="text-4xl font-extrabold text-accent-foreground" style={{color: 'hsl(var(--accent))'}}>
-                  $ {totalCost.toFixed(2)}
+                <div className="text-4xl font-extrabold" style={{color: 'hsl(var(--accent))'}}>
+                  {totalCost.toLocaleString('vi-VN')} đ
                 </div>
+                 <p className="text-sm text-muted-foreground mt-1">
+                  ({weight.toFixed(2)}g @ {costPerGram.toLocaleString('vi-VN')} đ/g)
+                </p>
               </div>
             </div>
           )}
