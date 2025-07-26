@@ -164,8 +164,8 @@ export default function Home() {
       </header>
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="max-w-3xl mx-auto">
-          <Card className="w-full shadow-lg rounded-xl overflow-hidden border-border">
-            <CardHeader className="text-center p-8 bg-card">
+          <Card className="w-full shadow-lg rounded-xl overflow-hidden border-border bg-card/50">
+            <CardHeader className="text-center p-8">
               <CardTitle className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
                 Ước tính chi phí in 3D
               </CardTitle>
@@ -190,7 +190,7 @@ export default function Home() {
                     Chọn tệp STL từ máy tính
                   </Button>
                   <p className="text-sm text-muted-foreground mt-3">hoặc kéo và thả tệp vào đây</p>
-                  <p className="text-xs text-muted-foreground mt-4">Hỗ trợ STL nhị phân. Kích thước tối đa 50MB.</p>
+                  <p className="text-xs text-muted-foreground mt-4">Hỗ trợ STL nhị phân & ASCII. Kích thước tối đa 50MB.</p>
                 </div>
               )}
 
@@ -209,7 +209,7 @@ export default function Home() {
                     <div className="space-y-6">
                       <h3 className="text-lg font-semibold text-foreground border-b pb-2">Thông số mô hình</h3>
                       <div className="grid grid-cols-2 gap-4">
-                        <Card className="bg-secondary/30">
+                        <Card className="bg-secondary/80">
                           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Khối lượng</CardTitle>
                             <Ruler className="h-4 w-4 text-muted-foreground" />
@@ -220,7 +220,7 @@ export default function Home() {
                             </div>
                           </CardContent>
                         </Card>
-                        <Card className="bg-secondary/30">
+                        <Card className="bg-secondary/80">
                           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Bề mặt</CardTitle>
                             <Shell className="h-4 w-4 text-muted-foreground" />
@@ -307,7 +307,7 @@ export default function Home() {
 
                     <div className="space-y-6">
                        <h3 className="text-lg font-semibold text-foreground border-b pb-2">Báo giá ước tính</h3>
-                       <Card className="bg-secondary/30">
+                       <Card className="bg-secondary/80">
                           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Cân nặng ước tính</CardTitle>
                             <Weight className="h-4 w-4 text-muted-foreground" />
@@ -333,7 +333,7 @@ export default function Home() {
               )}
             </CardContent>
             { (fileName || results) && !isLoading && (
-              <CardFooter className="p-6 sm:p-8 bg-card border-t">
+              <CardFooter className="p-6 sm:p-8 bg-transparent border-t">
                  <Button onClick={handleReset} variant="outline" className="w-full font-semibold">
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Tính toán lại với tệp khác
