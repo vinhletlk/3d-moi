@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent } from "lucide-react";
+import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight } from "lucide-react";
 
 type PrintTechnology = "fdm" | "resin";
 
@@ -168,7 +168,7 @@ export default function Home() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Card className="bg-secondary/50">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Khối lượng</CardTitle>
+                    <CardTitle className="text-sm font-medium">Khối lượng tổng thể</CardTitle>
                     <Ruler className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
@@ -260,6 +260,18 @@ export default function Home() {
                 </div>
               )}
 
+              <Card className="bg-secondary/50">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Cân nặng ước tính</CardTitle>
+                    <Weight className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {weight.toFixed(2)} <span className="text-lg text-muted-foreground">g</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
 
               <div className="bg-accent/20 border border-accent rounded-lg p-4 text-center">
                 <Label className="text-base font-semibold text-accent-foreground/90">Tổng chi phí ước tính</Label>
@@ -267,7 +279,7 @@ export default function Home() {
                   {(totalCost).toLocaleString('vi-VN', { maximumFractionDigits: 0, minimumFractionDigits: 0 })} đ
                 </div>
                  <p className="text-sm text-muted-foreground mt-1">
-                  ({weight.toFixed(2)}g @ {costPerGram.toLocaleString('vi-VN')} đ/g)
+                  (@ {costPerGram.toLocaleString('vi-VN')} đ/g)
                 </p>
               </div>
             </div>
