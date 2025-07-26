@@ -26,6 +26,7 @@ export default function Home() {
   const [technology, setTechnology] = useState<PrintTechnology>("fdm");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const [stlDataUri, setStlDataUri] = useState<string>("");
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -49,6 +50,7 @@ export default function Home() {
     reader.onload = async () => {
       try {
         const dataUri = reader.result as string;
+        setStlDataUri(dataUri);
         const calculationResult = await calculateVolume({ stlDataUri: dataUri });
         setResults(calculationResult);
       } catch (error: any) {
@@ -83,6 +85,7 @@ export default function Home() {
     setResults(null);
     setIsLoading(false);
     setFileName("");
+    setStlDataUri("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -200,7 +203,7 @@ export default function Home() {
               <div className="bg-accent/20 border border-accent rounded-lg p-4 text-center">
                 <Label className="text-base font-semibold text-accent-foreground/90">Tổng chi phí ước tính</Label>
                 <div className="text-4xl font-extrabold" style={{color: 'hsl(var(--accent))'}}>
-                  {totalCost.toLocaleString('vi-VN')} đ
+                  {(totalCost / 1000).toLocaleString('vi-VN', { maximumFractionDigits: 0, minimumFractionDigits: 0 })}.000 đ
                 </div>
                  <p className="text-sm text-muted-foreground mt-1">
                   ({weight.toFixed(2)}g @ {costPerGram.toLocaleString('vi-VN')} đ/g)
