@@ -29,7 +29,7 @@ export class StlParser {
     let totalSurfaceArea = 0;
     let currentVertices: number[][] = [];
 
-    const vertexRegex = /vertex\s+([-\d.eE]+)\s+([-\d.eE]+)\s+([-\d.eE]+)/;
+    const vertexRegex = /vertex\s+([-\d.eE]+)\s+([-\d.eE]+)\s+([-\d.eE]+)/i;
 
     for (const line of lines) {
       const trimmedLine = line.trim();
@@ -128,7 +128,7 @@ export class StlParser {
 
   parse(buffer: Buffer): { volume: number; surfaceArea: number } {
     // Check for ASCII STL by looking for 'solid' at the start
-    const isAscii = buffer.toString('utf8', 0, 5) === 'solid';
+    const isAscii = buffer.toString('utf8', 0, 5).toLowerCase() === 'solid';
     if (isAscii) {
       return this.parseAscii(buffer);
     }
