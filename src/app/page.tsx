@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets } from "lucide-react";
+import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent } from "lucide-react";
 
 type PrintTechnology = "fdm" | "resin";
 
@@ -26,6 +26,7 @@ export default function Home() {
   const [fileName, setFileName] = useState<string>("");
   const [technology, setTechnology] = useState<PrintTechnology>("fdm");
   const [infillPercentage, setInfillPercentage] = useState<number>(20);
+  const [shellThickness, setShellThickness] = useState<number>(2); // Default 2mm
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [stlDataUri, setStlDataUri] = useState<string>("");
@@ -95,10 +96,28 @@ export default function Home() {
   
   const calculateCost = () => {
     if (!results) return { weight: 0, totalCost: 0, costPerGram: 0 };
+    
+    let volume = 0;
+    let density = 0;
+    let costPerGram = 0;
 
-    const density = technology === "fdm" ? DENSITY_FDM : DENSITY_RESIN;
-    const costPerGram = technology === "fdm" ? COST_PER_GRAM_FDM : COST_PER_GRAM_RESIN;
-    const weight = results.volume * density * (infillPercentage / 100);
+    if (technology === 'fdm') {
+      density = DENSITY_FDM;
+      costPerGram = COST_PER_GRAM_FDM;
+      // For FDM, volume is reduced by infill percentage
+      volume = results.volume * (infillPercentage / 100);
+    } else { // Resin
+      density = DENSITY_RESIN;
+      costPerGram = COST_PER_GRAM_RESIN;
+      // For Resin, calculate volume of the shell
+      // Approximation: surface area (cm^2) * thickness (cm)
+      const thicknessInCm = shellThickness / 10;
+      const shellVolume = results.surfaceArea * thicknessInCm;
+      // Ensure shell volume is not greater than the total volume
+      volume = Math.min(shellVolume, results.volume);
+    }
+
+    const weight = volume * density;
     const totalCost = weight * costPerGram;
 
     return { weight, totalCost, costPerGram };
@@ -201,26 +220,51 @@ export default function Home() {
                 </RadioGroup>
               </div>
 
-               <div className="space-y-3">
-                <Label className="text-base" htmlFor="infill">Độ rỗng (Infill)</Label>
-                <div className="flex items-center space-x-4">
-                  <Slider
-                    id="infill"
-                    value={[infillPercentage]}
-                    onValueChange={(value) => setInfillPercentage(value[0])}
-                    max={100}
-                    step={5}
-                    className="flex-1"
-                  />
-                  <span className="text-lg font-bold w-16 text-right text-primary">{infillPercentage}%</span>
+              {technology === 'fdm' && (
+                <div className="space-y-3">
+                  <Label className="text-base flex items-center" htmlFor="infill">
+                    <Percent className="mr-2 h-4 w-4" />
+                    Độ rỗng (Infill)
+                  </Label>
+                  <div className="flex items-center space-x-4">
+                    <Slider
+                      id="infill"
+                      value={[infillPercentage]}
+                      onValueChange={(value) => setInfillPercentage(value[0])}
+                      max={100}
+                      step={5}
+                      className="flex-1"
+                    />
+                    <span className="text-lg font-bold w-16 text-right text-primary">{infillPercentage}%</span>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {technology === 'resin' && (
+                <div className="space-y-3">
+                   <Label className="text-base flex items-center" htmlFor="shell">
+                     <Contrast className="mr-2 h-4 w-4" />
+                     Độ dày vỏ (Shell)
+                  </Label>
+                  <div className="flex items-center space-x-4">
+                    <Slider
+                      id="shell"
+                      value={[shellThickness]}
+                      onValueChange={(value) => setShellThickness(value[0])}
+                      max={10}
+                      step={0.1}
+                      className="flex-1"
+                    />
+                    <span className="text-lg font-bold w-16 text-right text-primary">{shellThickness.toFixed(1)} mm</span>
+                  </div>
+                </div>
+              )}
 
 
               <div className="bg-accent/20 border border-accent rounded-lg p-4 text-center">
                 <Label className="text-base font-semibold text-accent-foreground/90">Tổng chi phí ước tính</Label>
                 <div className="text-4xl font-extrabold" style={{color: 'hsl(var(--accent))'}}>
-                  {(totalCost / 1000).toLocaleString('vi-VN', { maximumFractionDigits: 0, minimumFractionDigits: 0 })}.000 đ
+                  {(totalCost).toLocaleString('vi-VN', { maximumFractionDigits: 0, minimumFractionDigits: 0 })} đ
                 </div>
                  <p className="text-sm text-muted-foreground mt-1">
                   ({weight.toFixed(2)}g @ {costPerGram.toLocaleString('vi-VN')} đ/g)
