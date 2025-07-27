@@ -119,10 +119,11 @@ export default function Home() {
   };
   
   const calculateCost = () => {
-    if (!results) return { weight: 0, totalCost: 0 };
+    if (!results) return { weight: 0, totalCost: 0, costPerGram: 0 };
     
     let volume = 0;
     let density = 0;
+    const costPerGram = technology === 'fdm' ? COST_PER_GRAM_FDM : COST_PER_GRAM_RESIN;
 
     if (technology === 'fdm') {
       density = DENSITY_FDM;
@@ -139,14 +140,12 @@ export default function Home() {
     }
 
     const weight = volume * density;
-    const costPerGram = technology === 'fdm' ? COST_PER_GRAM_FDM : COST_PER_GRAM_RESIN;
     const totalCost = weight * costPerGram;
 
-    return { weight, totalCost };
+    return { weight, totalCost, costPerGram };
   };
 
-  const { weight, totalCost } = calculateCost();
-  const costPerGram = technology === 'fdm' ? COST_PER_GRAM_FDM : COST_PER_GRAM_RESIN;
+  const { weight, totalCost, costPerGram } = calculateCost();
 
   return (
     <div className="min-h-screen w-full bg-background font-sans text-foreground">
@@ -155,26 +154,26 @@ export default function Home() {
             <div className="flex items-center justify-between h-16">
                 <div className="flex items-center space-x-2">
                     <Scale className="w-8 h-8 text-primary" />
-                    <h1 className="text-2xl font-bold text-foreground">in3D</h1>
+                    <h1 className="text-xl sm:text-2xl font-bold text-foreground">in3D</h1>
                 </div>
                 <Button variant="ghost">Đăng nhập</Button>
             </div>
         </div>
       </header>
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         <div className="max-w-5xl mx-auto">
           <Card className="w-full shadow-lg rounded-xl overflow-hidden border-border bg-card/50">
-            <CardHeader className="text-center p-8">
-              <CardTitle className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+            <CardHeader className="text-center p-6 sm:p-8">
+              <CardTitle className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
                 Ước tính chi phí in 3D
               </CardTitle>
-              <CardDescription className="text-lg text-muted-foreground mt-2 max-w-2xl mx-auto">
+              <CardDescription className="text-md sm:text-lg text-muted-foreground mt-2 max-w-2xl mx-auto">
                 Tải lên tệp .STL của bạn để nhận ngay báo giá tức thì cho cả in FDM và Resin.
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-6 sm:p-8 space-y-8">
+            <CardContent className="p-4 sm:p-6 space-y-6">
               {!fileName && !isLoading && (
-                <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-border rounded-lg text-center transition-colors hover:border-primary hover:bg-accent">
+                <div className="flex flex-col items-center justify-center p-6 sm:p-8 border-2 border-dashed border-border rounded-lg text-center transition-colors hover:border-primary hover:bg-accent">
                   <input
                     type="file"
                     ref={fileInputRef}
@@ -183,35 +182,35 @@ export default function Home() {
                     accept=".stl"
                   />
                   <div className="mb-4 text-primary">
-                    <Upload className="h-12 w-12" />
+                    <Upload className="h-10 w-10 sm:h-12 sm:w-12" />
                   </div>
-                  <Button onClick={handleUploadClick} size="lg" className="font-bold">
-                    Chọn tệp STL từ máy tính
+                  <Button onClick={handleUploadClick} size="lg" className="font-bold text-base">
+                    Chọn tệp STL
                   </Button>
                   <p className="text-sm text-muted-foreground mt-3">hoặc kéo và thả tệp vào đây</p>
-                  <p className="text-xs text-muted-foreground mt-4">Hỗ trợ STL nhị phân & ASCII. Kích thước tối đa 50MB.</p>
+                  <p className="text-xs text-muted-foreground mt-4">Hỗ trợ STL nhị phân & ASCII. Tối đa 50MB.</p>
                 </div>
               )}
 
               {isLoading && (
                 <div className="flex flex-col items-center justify-center space-y-4 p-6 min-h-[200px]">
                   <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
-                  <p className="text-xl font-semibold">Đang xử lý <span className="font-bold text-primary">{fileName}</span></p>
+                  <p className="text-lg sm:text-xl font-semibold">Đang xử lý <span className="font-bold text-primary">{fileName}</span></p>
                   <Progress value={progress} className="w-full max-w-sm" />
                   <p className="text-sm text-muted-foreground">Quá trình này có thể mất một chút thời gian...</p>
                 </div>
               )}
               
               {results && !isLoading && (
-                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-start">
                   <div className="space-y-6">
-                     <Card className="aspect-square w-full bg-secondary/30 rounded-lg border border-border flex flex-col items-center justify-center">
-                        <Box className="w-24 h-24 text-primary/50" />
-                        <p className="text-lg font-semibold mt-4 text-foreground">{fileName}</p>
+                     <Card className="aspect-square w-full bg-secondary/30 rounded-lg border border-border flex flex-col items-center justify-center p-4">
+                        <Box className="w-20 h-20 sm:w-24 sm:h-24 text-primary/50" />
+                        <p className="text-md sm:text-lg font-semibold mt-4 text-foreground text-center">{fileName}</p>
                         <p className="text-sm text-muted-foreground">Tệp đã tải lên</p>
                      </Card>
                   </div>
-                  <div className="space-y-8">
+                  <div className="space-y-6">
                     <div className="space-y-6">
                       <h3 className="text-lg font-semibold text-foreground border-b pb-2">Thông số mô hình</h3>
                       <div className="grid grid-cols-2 gap-4">
@@ -221,8 +220,8 @@ export default function Home() {
                             <Ruler className="h-4 w-4 text-muted-foreground" />
                           </CardHeader>
                           <CardContent>
-                            <div className="text-2xl font-bold">
-                              {results.volume.toFixed(2)} <span className="text-base font-normal text-muted-foreground">cm³</span>
+                            <div className="text-xl sm:text-2xl font-bold">
+                              {results.volume.toFixed(2)} <span className="text-sm sm:text-base font-normal text-muted-foreground">cm³</span>
                             </div>
                           </CardContent>
                         </Card>
@@ -232,8 +231,8 @@ export default function Home() {
                             <Shell className="h-4 w-4 text-muted-foreground" />
                           </CardHeader>
                           <CardContent>
-                            <div className="text-2xl font-bold">
-                              {results.surfaceArea.toFixed(2)} <span className="text-base font-normal text-muted-foreground">cm²</span>
+                            <div className="text-xl sm:text-2xl font-bold">
+                              {results.surfaceArea.toFixed(2)} <span className="text-sm sm:text-base font-normal text-muted-foreground">cm²</span>
                             </div>
                           </CardContent>
                         </Card>
@@ -311,7 +310,7 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                        <h3 className="text-lg font-semibold text-foreground border-b pb-2">Báo giá ước tính</h3>
                        <Card className="bg-secondary/80">
                           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -319,14 +318,14 @@ export default function Home() {
                             <Weight className="h-4 w-4 text-muted-foreground" />
                           </CardHeader>
                           <CardContent>
-                            <div className="text-2xl font-bold">
-                              {weight.toFixed(2)} <span className="text-base font-normal text-muted-foreground">g</span>
+                            <div className="text-xl sm:text-2xl font-bold">
+                              {weight.toFixed(2)} <span className="text-sm sm:text-base font-normal text-muted-foreground">g</span>
                             </div>
                           </CardContent>
                         </Card>
                        <div className="bg-gradient-to-br from-primary/80 to-primary rounded-lg p-6 text-center text-primary-foreground shadow-xl">
-                        <Label className="text-lg font-semibold opacity-90">Tổng chi phí</Label>
-                        <div className="text-5xl font-extrabold tracking-tight mt-1">
+                        <Label className="text-md sm:text-lg font-semibold opacity-90">Tổng chi phí</Label>
+                        <div className="text-4xl sm:text-5xl font-extrabold tracking-tight mt-1">
                           {totalCost.toLocaleString('vi-VN', { maximumFractionDigits: 0, minimumFractionDigits: 0 })} đ
                         </div>
                          <p className="text-sm opacity-80 mt-2">
@@ -339,10 +338,10 @@ export default function Home() {
               )}
             </CardContent>
             { (fileName || results) && !isLoading && (
-              <CardFooter className="p-6 sm:p-8 bg-transparent border-t">
+              <CardFooter className="p-4 sm:p-6 bg-transparent border-t">
                  <Button onClick={handleReset} variant="outline" className="w-full font-semibold">
                   <RefreshCw className="mr-2 h-4 w-4" />
-                  Tính toán lại với tệp khác
+                  Tính toán lại
                 </Button>
               </CardFooter>
             )}
@@ -356,3 +355,4 @@ export default function Home() {
       </footer>
     </div>
   );
+}
