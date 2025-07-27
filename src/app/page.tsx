@@ -119,20 +119,17 @@ export default function Home() {
   };
   
   const calculateCost = () => {
-    if (!results) return { weight: 0, totalCost: 0, costPerGram: 0 };
+    if (!results) return { weight: 0, totalCost: 0 };
     
     let volume = 0;
     let density = 0;
-    let costPerGram = 0;
 
     if (technology === 'fdm') {
       density = DENSITY_FDM;
-      costPerGram = COST_PER_GRAM_FDM;
       // For FDM, volume is reduced by infill percentage
       volume = results.volume * (infillPercentage / 100);
     } else { // Resin
       density = DENSITY_RESIN;
-      costPerGram = COST_PER_GRAM_RESIN;
       // For Resin, calculate volume of the shell
       // Approximation: surface area (cm^2) * thickness (cm)
       const thicknessInCm = shellThickness / 10;
@@ -142,12 +139,14 @@ export default function Home() {
     }
 
     const weight = volume * density;
+    const costPerGram = technology === 'fdm' ? COST_PER_GRAM_FDM : COST_PER_GRAM_RESIN;
     const totalCost = weight * costPerGram;
 
-    return { weight, totalCost, costPerGram };
+    return { weight, totalCost };
   };
 
-  const { weight, totalCost, costPerGram } = calculateCost();
+  const { weight, totalCost } = calculateCost();
+  const costPerGram = technology === 'fdm' ? COST_PER_GRAM_FDM : COST_PER_GRAM_RESIN;
 
   return (
     <div className="min-h-screen w-full bg-background font-sans text-foreground">
@@ -357,4 +356,3 @@ export default function Home() {
       </footer>
     </div>
   );
-}
