@@ -4,13 +4,11 @@
  * 
  * - processOrder - A function that handles the order submission.
  */
-
+require('dotenv').config();
 import { ai } from '@/ai/genkit';
 import { OrderInputSchema, OrderOutputSchema, type OrderInput, type OrderOutput } from '../schema';
 import { Resend } from 'resend';
 
-// Initialize Resend with the API key from environment variables
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function processOrder(input: OrderInput): Promise<OrderOutput> {
   const result = await processOrderFlow(input);
@@ -29,6 +27,7 @@ export async function processOrder(input: OrderInput): Promise<OrderOutput> {
   }
 
   try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
       from: 'in3D <onboarding@resend.dev>', // Replace with your verified domain if you have one
       to: [input.customerEmail],
