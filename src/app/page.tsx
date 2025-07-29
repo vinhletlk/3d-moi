@@ -9,11 +9,11 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle } from "lucide-react";
+import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle, Wand2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { StlParser } from "@/lib/stl-parser";
 import { consultAI } from "@/ai/flows/consult-flow";
-import { type ConsultationInput } from "@/ai/schema";
+import { type ConsultationInput, type ConsultationOutput } from "@/ai/schema";
 import ReactMarkdown from 'react-markdown';
 
 
@@ -24,9 +24,8 @@ interface CalculationOutput {
   surfaceArea: number;
 }
 
-// Approximate densities (g/cm³)
-const DENSITY_FDM = 1.25; // e.g., PLA plastic
-const DENSITY_RESIN = 1.15; // e.g., standard resin
+const DENSITY_FDM = 1.25; 
+const DENSITY_RESIN = 1.15;
 
 const COST_PER_GRAM_FDM = 1000;
 const COST_PER_GRAM_RESIN = 4000;
@@ -37,13 +36,13 @@ export default function Home() {
   const [fileName, setFileName] = useState<string>("");
   const [technology, setTechnology] = useState<PrintTechnology>("fdm");
   const [infillPercentage, setInfillPercentage] = useState<number>(20);
-  const [shellThickness, setShellThickness] = useState<number>(2); // Default 2mm
+  const [shellThickness, setShellThickness] = useState<number>(2);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [progress, setProgress] = useState(0);
 
   const [isConsulting, setIsConsulting] = useState<boolean>(false);
-  const [consultationResult, setConsultationResult] = useState<string | null>(null);
+  const [consultationResult, setConsultationResult] = useState<ConsultationOutput | null>(null);
   const [consultationError, setConsultationError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -145,16 +144,12 @@ export default function Home() {
     if (technology === 'fdm') {
       density = DENSITY_FDM;
       costPerGram = COST_PER_GRAM_FDM;
-      // For FDM, volume is reduced by infill percentage
       volume = results.volume * (infillPercentage / 100);
     } else { // Resin
       density = DENSITY_RESIN;
       costPerGram = COST_PER_GRAM_RESIN;
-      // For Resin, calculate volume of the shell
-      // Approximation: surface area (cm^2) * thickness (cm)
       const thicknessInCm = shellThickness / 10;
       const shellVolume = results.surfaceArea * thicknessInCm;
-      // Ensure shell volume is not greater than the total volume
       volume = Math.min(shellVolume, results.volume);
     }
 
@@ -187,7 +182,7 @@ export default function Home() {
 
     try {
       const response = await consultAI(input);
-      setConsultationResult(response.advice);
+      setConsultationResult(response);
     } catch (error) {
       console.error("AI Consultation Error:", error);
       setConsultationError("Xin lỗi, đã có lỗi xảy ra khi kết nối với trợ lý AI. Vui lòng thử lại sau.");
@@ -195,6 +190,23 @@ export default function Home() {
       setIsConsulting(false);
     }
   };
+
+  const applyAISuggestion = () => {
+    if (!consultationResult) return;
+    if (consultationResult.suggestedInfill !== undefined && technology === 'fdm') {
+      setInfillPercentage(consultationResult.suggestedInfill);
+      toast({ title: "Đã áp dụng đề xuất", description: `Độ rỗng đã được cập nhật thành ${consultationResult.suggestedInfill}%.` });
+    }
+    if (consultationResult.suggestedShellThickness !== undefined && technology === 'resin') {
+      setShellThickness(consultationResult.suggestedShellThickness);
+      toast({ title: "Đã áp dụng đề xuất", description: `Độ dày vỏ đã được cập nhật thành ${consultationResult.suggestedShellThickness.toFixed(1)}mm.` });
+    }
+  };
+
+  const canApplySuggestion = consultationResult &&
+    ((consultationResult.suggestedInfill !== undefined && technology === 'fdm') ||
+     (consultationResult.suggestedShellThickness !== undefined && technology === 'resin'));
+
 
   return (
     <div className="min-h-screen w-full bg-background font-sans text-foreground">
@@ -302,7 +314,7 @@ export default function Home() {
                             value={technology}
                             onValueChange={(value) => {
                                 setTechnology(value as PrintTechnology);
-                                setConsultationResult(null); // Reset consultation on change
+                                setConsultationResult(null);
                                 setConsultationError(null);
                             }}
                             className="grid grid-cols-2 gap-4"
@@ -438,8 +450,16 @@ export default function Home() {
                           Tư vấn từ Trợ lý AI
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="prose prose-invert prose-sm sm:prose-base max-w-none text-foreground">
-                        <ReactMarkdown>{consultationResult}</ReactMarkdown>
+                    <CardContent className="space-y-4">
+                        <div className="prose prose-invert prose-sm sm:prose-base max-w-none text-foreground">
+                          <ReactMarkdown>{consultationResult.advice}</ReactMarkdown>
+                        </div>
+                        {canApplySuggestion && (
+                           <Button onClick={applyAISuggestion}>
+                                <Wand2 className="mr-2 h-4 w-4" />
+                                Áp dụng đề xuất của AI
+                           </Button>
+                        )}
                     </CardContent>
                  </Card>
               )}

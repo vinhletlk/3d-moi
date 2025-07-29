@@ -23,5 +23,7 @@ export type ConsultationInput = z.infer<typeof ConsultationInputSchema>;
 
 export const ConsultationOutputSchema = z.object({
   advice: z.string().describe("The detailed advice from the AI assistant, formatted as Markdown."),
+  suggestedInfill: z.number().optional().describe("The suggested infill percentage for FDM, if applicable."),
+  suggestedShellThickness: z.number().optional().describe("The suggested shell thickness in mm for Resin, if applicable."),
 });
 export type ConsultationOutput = z.infer<typeof ConsultationOutputSchema>;

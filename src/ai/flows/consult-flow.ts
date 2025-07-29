@@ -35,7 +35,9 @@ Here are the details of their model and print settings:
 - Resin Shell Thickness: {{{shellThickness}}} mm
 {{/if}}
 
-Based on this information, provide a concise and actionable consultation. Structure your response in Markdown with the following sections:
+Based on this information, provide a concise and actionable consultation. Structure your response in Markdown in the "advice" field.
+
+Also, analyze the suggestions and if you provide a SPECIFIC NUMERIC suggestion for infill or shell thickness, populate the corresponding output fields. For example, if you suggest "Giảm độ rỗng xuống 15%", you must set the 'suggestedInfill' field to 15. If you suggest reducing shell thickness to 1.8mm, you must set 'suggestedShellThickness' to 1.8. If no specific numeric suggestion is made, leave these fields empty.
 
 ### Phân tích nhanh
 - Briefly analyze the provided stats. For example, comment on whether the volume/weight is large or small for the chosen technology. Mention the relationship between the settings (e.g., infill/shell thickness) and the final cost/weight.
@@ -44,7 +46,6 @@ Based on this information, provide a concise and actionable consultation. Struct
 - Provide specific, actionable suggestions for optimization.
 - If FDM:
   - Suggest adjusting the infill percentage. Explain the trade-offs (e.g., "Giảm độ rỗng xuống 15% có thể tiết kiệm chi phí nhưng sẽ làm giảm độ bền. Mức 20% là một sự cân bằng tốt cho các mô hình trưng bày.").
-  - Mention orientation can affect support material and print time (though you can't see the model, you can give general advice).
 - If Resin:
   - Suggest adjusting shell thickness. Explain the trade-offs (e.g., "Độ dày vỏ 2.0mm là khá tiêu chuẩn. Bạn có thể thử giảm xuống 1.8mm để tiết kiệm một chút vật liệu cho các mô hình không yêu cầu độ bền cơ học cao.").
   - Mention hollowing the model (if not already implied by shell thickness) and adding drainage holes to save resin.
