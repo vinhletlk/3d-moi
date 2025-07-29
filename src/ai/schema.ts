@@ -1,10 +1,5 @@
 /**
  * @fileOverview Schemas and types for the AI consultation flow.
- *
- * - ConsultationInputSchema - The Zod schema for the consultation input.
- * - ConsultationInput - The TypeScript type for the consultation input.
- * - ConsultationOutputSchema - The Zod schema for the consultation output.
- * - ConsultationOutput - The TypeScript type for the consultation output.
  */
 
 import {z} from 'zod';
@@ -27,3 +22,18 @@ export const ConsultationOutputSchema = z.object({
   suggestedShellThickness: z.number().optional().describe("The suggested shell thickness in mm for Resin, if applicable."),
 });
 export type ConsultationOutput = z.infer<typeof ConsultationOutputSchema>;
+
+export const OrderInputSchema = z.object({
+    customerName: z.string().min(2, { message: "Họ tên phải có ít nhất 2 ký tự." }),
+    customerPhone: z.string().regex(/^(0?)(3[2-9]|5[6|8|9]|7[0|6-9]|8[0-6|8|9]|9[0-4|6-9])[0-9]{7}$/, { message: "Số điện thoại không hợp lệ." }),
+    customerEmail: z.string().email({ message: "Địa chỉ email không hợp lệ." }),
+    customerAddress: z.string().min(10, { message: "Địa chỉ phải có ít nhất 10 ký tự." }),
+    orderDetails: ConsultationInputSchema.optional(), // We'll add this in the handler
+});
+export type OrderInput = z.infer<typeof OrderInputSchema>;
+
+export const OrderOutputSchema = z.object({
+    confirmationEmail: z.string().describe("The full confirmation email body to be sent to the customer, formatted in Markdown."),
+    confirmationSms: z.string().describe("A short SMS confirmation message to be sent to the customer."),
+});
+export type OrderOutput = z.infer<typeof OrderOutputSchema>;

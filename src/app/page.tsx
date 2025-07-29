@@ -9,12 +9,18 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle, Wand2 } from "lucide-react";
+import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle, Wand2, Send } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { StlParser } from "@/lib/stl-parser";
 import { consultAI } from "@/ai/flows/consult-flow";
-import { type ConsultationInput, type ConsultationOutput } from "@/ai/schema";
+import { type ConsultationInput, type ConsultationOutput, OrderInputSchema, type OrderInput } from "@/ai/schema";
 import ReactMarkdown from 'react-markdown';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { processOrder } from "@/ai/flows/order-flow";
+import { Textarea } from "@/components/ui/textarea";
 
 
 type PrintTechnology = "fdm" | "resin";
@@ -45,6 +51,19 @@ export default function Home() {
   const [isConsulting, setIsConsulting] = useState<boolean>(false);
   const [consultationResult, setConsultationResult] = useState<ConsultationOutput | null>(null);
   const [consultationError, setConsultationError] = useState<string | null>(null);
+
+  const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+
+  const form = useForm<OrderInput>({
+    resolver: zodResolver(OrderInputSchema),
+    defaultValues: {
+      customerName: "",
+      customerPhone: "",
+      customerEmail: "",
+      customerAddress: "",
+    },
+  });
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -130,6 +149,7 @@ export default function Home() {
     setProgress(0);
     setConsultationResult(null);
     setConsultationError(null);
+    form.reset();
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -211,6 +231,42 @@ export default function Home() {
   const canApplySuggestion = consultationResult &&
     ((consultationResult.suggestedInfill !== undefined && technology === 'fdm') ||
      (consultationResult.suggestedShellThickness !== undefined && technology === 'resin'));
+  
+  const handleOrderSubmit = async (values: OrderInput) => {
+    if (!results) return;
+    setIsSubmittingOrder(true);
+    
+    const orderDetails: ConsultationInput = {
+      fileName: fileName,
+      technology: technology,
+      volume: results.volume,
+      surfaceArea: results.surfaceArea,
+      estimatedWeight: weight,
+      estimatedCost: totalCost,
+      ...(technology === 'fdm'
+        ? { infillPercentage: infillPercentage }
+        : { shellThickness: shellThickness }),
+    };
+
+    try {
+      await processOrder({ ...values, orderDetails });
+      setIsOrderDialogOpen(false);
+      form.reset();
+      toast({
+        title: "Đặt hàng thành công!",
+        description: "Cảm ơn bạn đã đặt hàng. Chúng tôi sẽ liên hệ với bạn sớm nhất.",
+      });
+    } catch (error) {
+       console.error("Order submission error:", error);
+       toast({
+         variant: "destructive",
+         title: "Lỗi đặt hàng",
+         description: "Đã có lỗi xảy ra. Vui lòng thử lại sau."
+       });
+    } finally {
+        setIsSubmittingOrder(false);
+    }
+  };
 
 
   return (
@@ -474,11 +530,94 @@ export default function Home() {
 
             </CardContent>
             { (fileName || results) && !isLoading && (
-              <CardFooter className="p-4 sm:p-6 bg-transparent border-t">
+              <CardFooter className="p-4 sm:p-6 bg-transparent border-t grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <Button onClick={handleReset} variant="outline" className="w-full font-semibold">
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Tính toán lại
                 </Button>
+                 <Dialog open={isOrderDialogOpen} onOpenChange={setIsOrderDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button className="w-full font-semibold" size="lg">
+                            <Send className="mr-2 h-4 w-4" />
+                            Tiến hành Đặt hàng
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[480px]">
+                        <DialogHeader>
+                            <DialogTitle>Thông tin đặt hàng</DialogTitle>
+                            <DialogDescription>
+                                Vui lòng điền đầy đủ thông tin để chúng tôi có thể giao hàng cho bạn.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(handleOrderSubmit)} className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="customerName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Họ và Tên</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Nguyễn Văn A" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="customerPhone"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Số điện thoại</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="09xxxxxxxx" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="customerEmail"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Email</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="example@email.com" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                 <FormField
+                                    control={form.control}
+                                    name="customerAddress"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Địa chỉ giao hàng</FormLabel>
+                                            <FormControl>
+                                                <Textarea placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <DialogFooter>
+                                    <DialogClose asChild>
+                                        <Button type="button" variant="outline">
+                                            Hủy
+                                        </Button>
+                                    </DialogClose>
+                                    <Button type="submit" disabled={isSubmittingOrder}>
+                                        {isSubmittingOrder && <LoaderCircle className="animate-spin mr-2" />}
+                                        Xác nhận Đặt hàng
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </Form>
+                    </DialogContent>
+                </Dialog>
               </CardFooter>
             )}
           </Card>
