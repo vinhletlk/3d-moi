@@ -11,9 +11,9 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { app } from "@/lib/firebase"; // Import a initialized firebase app
 import { StlParser } from "@/lib/stl-parser";
-import { consultAI, type ConsultationInput } from "@/ai/flows/consult-flow";
+import { consultAI } from "@/ai/flows/consult-flow";
+import { type ConsultationInput } from "@/ai/schema";
 import ReactMarkdown from 'react-markdown';
 
 
