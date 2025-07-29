@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, type ChangeEvent, useEffect } from "react";
-import { calculateVolume, type CalculateVolumeOutput } from "@/ai/flows/calculate-volume-from-stl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,8 +11,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight, Box } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { app } from "@/lib/firebase"; // Import a initialized firebase app
+import { StlParser } from "@/lib/stl-parser";
 
 type PrintTechnology = "fdm" | "resin";
+
+interface CalculationOutput {
+  volume: number;
+  surfaceArea: number;
+}
 
 // Approximate densities (g/cm³)
 const DENSITY_FDM = 1.25; // e.g., PLA plastic
@@ -23,7 +28,7 @@ const COST_PER_GRAM_FDM = 1000;
 const COST_PER_GRAM_RESIN = 4000;
 
 export default function Home() {
-  const [results, setResults] = useState<CalculateVolumeOutput | null>(null);
+  const [results, setResults] = useState<CalculationOutput | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [fileName, setFileName] = useState<string>("");
   const [technology, setTechnology] = useState<PrintTechnology>("fdm");
@@ -31,7 +36,6 @@ export default function Home() {
   const [shellThickness, setShellThickness] = useState<number>(2); // Default 2mm
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const [stlDataUri, setStlDataUri] = useState<string>("");
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -52,7 +56,7 @@ export default function Home() {
     };
   }, [isLoading]);
 
-  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -70,12 +74,13 @@ export default function Home() {
     setResults(null);
 
     const reader = new FileReader();
-    reader.readAsDataURL(file);
+    reader.readAsArrayBuffer(file);
     reader.onload = async () => {
       try {
-        const dataUri = reader.result as string;
-        setStlDataUri(dataUri);
-        const calculationResult = await calculateVolume({ stlDataUri: dataUri });
+        const buffer = Buffer.from(reader.result as ArrayBuffer);
+        const parser = new StlParser();
+        const calculationResult = parser.parse(buffer);
+
         setProgress(100);
         setTimeout(() => {
           setResults(calculationResult);
@@ -112,7 +117,6 @@ export default function Home() {
     setResults(null);
     setIsLoading(false);
     setFileName("");
-    setStlDataUri("");
     setProgress(0);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -124,14 +128,16 @@ export default function Home() {
     
     let volume = 0;
     let density = 0;
-    const costPerGram = technology === 'fdm' ? COST_PER_GRAM_FDM : COST_PER_GRAM_RESIN;
+    let costPerGram = 0;
 
     if (technology === 'fdm') {
       density = DENSITY_FDM;
+      costPerGram = COST_PER_GRAM_FDM;
       // For FDM, volume is reduced by infill percentage
       volume = results.volume * (infillPercentage / 100);
     } else { // Resin
       density = DENSITY_RESIN;
+      costPerGram = COST_PER_GRAM_RESIN;
       // For Resin, calculate volume of the shell
       // Approximation: surface area (cm^2) * thickness (cm)
       const thicknessInCm = shellThickness / 10;
@@ -357,3 +363,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
