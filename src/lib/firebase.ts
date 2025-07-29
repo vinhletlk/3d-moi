@@ -16,4 +16,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-const analytics = isSupported().
+// It's good practice to check for support before using analytics.
+const analytics = isSupported().then(yes => yes ? getAnalytics(app) : null);
+
+export { app, analytics };

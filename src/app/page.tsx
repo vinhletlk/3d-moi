@@ -11,6 +11,7 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight, Box } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { app } from "@/lib/firebase"; // Import a initialized firebase app
 
 type PrintTechnology = "fdm" | "resin";
 
