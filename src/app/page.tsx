@@ -223,7 +223,7 @@ export default function Home() {
                       <div className="grid grid-cols-2 gap-4">
                         <Card className="bg-secondary/80">
                           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Khối lượng</CardTitle>
+                            <CardTitle className="text-sm font-medium">Thể tích</CardTitle>
                             <Ruler className="h-4 w-4 text-muted-foreground" />
                           </CardHeader>
                           <CardContent>
@@ -363,5 +363,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
