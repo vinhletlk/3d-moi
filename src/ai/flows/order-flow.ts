@@ -4,11 +4,9 @@
  * 
  * - processOrder - A function that handles the order submission.
  */
-require('dotenv').config();
 import { ai } from '@/ai/genkit';
 import { OrderInputSchema, OrderOutputSchema, type OrderInput, type OrderOutput } from '../schema';
 import { Resend } from 'resend';
-
 
 export async function processOrder(input: OrderInput): Promise<OrderOutput> {
   const result = await processOrderFlow(input);
