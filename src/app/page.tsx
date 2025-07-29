@@ -40,7 +40,7 @@ const COST_PER_GRAM_FDM = 1000;
 const COST_PER_GRAM_RESIN = 4000;
 const SUPPORT_COST_FACTOR = 1.15; // 15% increase for supports
 
-const StlViewer = dynamic(() => import('@/components/stl-viewer').then(mod => mod.StlViewer), {
+const StlViewer = dynamic(() => import('@/components/stl-viewer'), {
   ssr: false,
   loading: () => <div className="w-full h-full flex items-center justify-center"><Skeleton className="w-full h-full" /></div>
 });
@@ -685,5 +685,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

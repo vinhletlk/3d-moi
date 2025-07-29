@@ -1,0 +1,316 @@
+diff --git a/node_modules/@react-three/fiber/dist/react-three-fiber.esm.js b/node_modules/@react-three/fiber/dist/react-three-fiber.esm.js
+index 5887201..09a21b3 100644
+--- a/node_modules/@react-three/fiber/dist/react-three-fiber.esm.js
++++ b/node_modules/@react-three/fiber/dist/react-three-fiber.esm.js
+@@ -1,5 +1,6 @@
+-import * as React from 'react';
++import React from 'react';
++import * as ReactExperimental from 'react';
+ import * as THREE from 'three';
+ import { useLayoutEffect, useMemo, useRef, forwardRef, useEffect, useContext, createContext, useState, useCallback, useReducer } from 'react';
+ import { TinyEmitter } from 'tiny-emitter';
+@@ -2096,7 +2097,7 @@
+  * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
+  */
+ const Canvas = /*#__PURE__*/forwardRef(function Canvas({
+-  children,
++  children: canvasChildren,
+   id,
+   style,
+   className,
+@@ -2126,6 +2127,11 @@
+   let colorManagement = gl.__r3f;
+   if (colorManagement === undefined) {
+     const isLinear = linear;
++    const {
++      children,
++      ...rest
++    } = props;
++
+     colorManagement = {
+       ...props,
+       isLinear,
+@@ -2150,7 +2156,7 @@
+       }
+     } = colorManagement;
+     const newProps = {
+-      ...props,
++      ...rest,
+       ...raycaster,
+       ...colorManagement,
+       ...event,
+@@ -2160,7 +2166,7 @@
+         // Render the canvas into the dom
+         return /*#__PURE__*/React.createElement("div", {
+           ref: combineRefs,
+-          ...props,
++          ...rest,
+           style: {
+             position: 'relative',
+             width: '100%',
+@@ -2171,7 +2177,7 @@
+           children: /*#__PURE__*/React.createElement("div", {
+             ref: handleRef,
+             style: {
+-              ...style,
++              ...rest.style,
+               width: '100%',
+               height: '100%'
+             }
+@@ -2181,7 +2187,7 @@
+             // Render the canvas into a portal, rooted into the pointer-event div
+             return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+               ref: combineRefs,
+-              ...props,
++              ...rest,
+               style: {
+                 position: 'relative',
+                 width: '100%',
+@@ -2191,7 +2197,7 @@
+               // The container contains the canvas and canvas children, it's a fragment
+               children: [/*#__PURE__*/React.createElement("div", {
+                 ref: handleRef,
+-                style: {
++                style: { ...style,
+                   width: '100%',
+                   height: '100%'
+                 }
+@@ -2200,7 +2206,7 @@
+                 // Everything defined in here will render into the canvas
+                 createPortal( /*#__PURE__*/React.createElement(CanvasChildren, {
+                   container: handleRef,
+-                  ...newProps
++                  ...newProps,
+                 }), handleRef.current, {
+                   events: colorManagement.events,
+                   size: colorManagement.size
+@@ -2212,7 +2218,7 @@
+   }
+ });
+ function CanvasChildren({
+-  children,
++  children: canvasChildren,
+   container,
+   ...props
+ }) {
+@@ -2223,7 +2229,7 @@
+       return;
+     }
+     const state = store.getState();
+-    if (React.isValidElement(children)) {
++    if (React.isValidElement(canvasChildren)) {
+       // Create a root and set up rendering, sugar-syntax for -> createRoot(canvas).render(React.createElement(CanvasChildren, props))
+       state.gl.render( /*#__PURE__*/React.createElement(React.Fragment, null, children), container, {
+         ...props,
+@@ -2233,14 +2239,14 @@
+       // For that we must render a fragment
+       state.gl.render( /*#__PURE__*/React.createElement(React.Fragment, null, children), container, {
+         ...props,
+-        onCreated: store => {
++        onCreated: (store) => {
+           if (props.onCreated) props.onCreated(store);
+-          if (root.current) root.current.onCreated(store);
++          if (root.current) root.current.onCreated(store)
+         }
+       });
+     }
+     return () => unmountComponentAtNode(state.scene, state.gl);
+-  }, [container, children]);
++  }, [container, canvasChildren]);
+   // TODO: remove this when r3f release a new version with the fix
+   // https://github.com/pmndrs/react-three-fiber/pull/1545
+   useEffect(() => {
+@@ -2258,6 +2264,15 @@
+  * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
+  */
+ const GrandCanvas = /*#__PURE__*/forwardRef(function GrandCanvas(props, ref) {
++  const {
++    ReactCurrentOwner
++  } = ReactExperimental.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
++  const prevOwner = ReactCurrentOwner.current;
++  try {
++    ReactCurrentOwner.current = null;
++    return React.createElement(Canvas, { ...props,
++      ref
++    });
++  } finally {
++    ReactCurrentOwner.current = prevOwner;
++  }
+   return /*#__PURE__*/React.createElement(Canvas, { ...props,
+     ref: ref
+   });
+diff --git a/node_modules/@react-three/fiber/dist/react-three-fiber.cjs.js b/node_modules/@react-three/fiber/dist/react-three-fiber.cjs.js
+index b883584..a6e61f2 100644
+--- a/node_modules/@react-three/fiber/dist/react-three-fiber.cjs.js
++++ b/node_modules/@react-three/fiber/dist/react-three-fiber.cjs.js
+@@ -1,5 +1,6 @@
+ 'use strict';
+ 
+-Object.defineProperty(exports, '__esModule', { value: true });
++Object.defineProperty(exports, '__esModule', {
++  value: true
++});
+ 
+ var React = require('react');
+ var THREE = require('three');
+@@ -20,6 +21,8 @@
+ function _interopNamespace(e) {
+   if (e && e.__esModule) return e;
+   var n = Object.create(null);
+-  if (e) {
++  if (e)
+     Object.keys(e).forEach(function (k) {
+       if (k !== 'default') {
+         var d = Object.getOwnPropertyDescriptor(e, k);
+@@ -30,7 +33,6 @@
+         });
+       }
+     });
+-  }
+   n["default"] = e;
+   return Object.freeze(n);
+ }
+@@ -1946,7 +1948,7 @@
+  * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
+  */
+ const Canvas = /*#__PURE__*/React.forwardRef(function Canvas({
+-  children,
++  children: canvasChildren,
+   id,
+   style,
+   className,
+@@ -1976,6 +1978,11 @@
+   let colorManagement = gl.__r3f;
+   if (colorManagement === undefined) {
+     const isLinear = linear;
++    const {
++      children,
++      ...rest
++    } = props;
++
+     colorManagement = {
+       ...props,
+       isLinear,
+@@ -2000,7 +2007,7 @@
+       }
+     } = colorManagement;
+     const newProps = {
+-      ...props,
++      ...rest,
+       ...raycaster,
+       ...colorManagement,
+       ...event,
+@@ -2010,7 +2017,7 @@
+         // Render the canvas into the dom
+         return /*#__PURE__*/React.createElement("div", {
+           ref: combineRefs,
+-          ...props,
++          ...rest,
+           style: {
+             position: 'relative',
+             width: '100%',
+@@ -2021,7 +2028,7 @@
+           children: /*#__PURE__*/React.createElement("div", {
+             ref: handleRef,
+             style: {
+-              ...style,
++              ...rest.style,
+               width: '100%',
+               height: '100%'
+             }
+@@ -2031,7 +2038,7 @@
+             // Render the canvas into a portal, rooted into the pointer-event div
+             return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+               ref: combineRefs,
+-              ...props,
++              ...rest,
+               style: {
+                 position: 'relative',
+                 width: '100%',
+@@ -2041,7 +2048,7 @@
+               // The container contains the canvas and canvas children, it's a fragment
+               children: [/*#__PURE__*/React.createElement("div", {
+                 ref: handleRef,
+-                style: {
++                style: { ...style,
+                   width: '100%',
+                   height: '100%'
+                 }
+@@ -2050,7 +2057,7 @@
+                 // Everything defined in here will render into the canvas
+                 render( /*#__PURE__*/React.createElement(CanvasChildren, {
+                   container: handleRef,
+-                  ...newProps
++                  ...newProps,
+                 }), handleRef.current, {
+                   events: colorManagement.events,
+                   size: colorManagement.size
+@@ -2062,7 +2069,7 @@
+   }
+ });
+ function CanvasChildren({
+-  children,
++  children: canvasChildren,
+   container,
+   ...props
+ }) {
+@@ -2073,7 +2080,7 @@
+       return;
+     }
+     const state = store.getState();
+-    if (React.isValidElement(children)) {
++    if (React.isValidElement(canvasChildren)) {
+       // Create a root and set up rendering, sugar-syntax for -> createRoot(canvas).render(React.createElement(CanvasChildren, props))
+       state.gl.render( /*#__PURE__*/React.createElement(React.Fragment, null, children), container, {
+         ...props,
+@@ -2083,14 +2090,14 @@
+       // For that we must render a fragment
+       state.gl.render( /*#__PURE__*/React.createElement(React.Fragment, null, children), container, {
+         ...props,
+-        onCreated: store => {
++        onCreated: (store) => {
+           if (props.onCreated) props.onCreated(store);
+-          if (root.current) root.current.onCreated(store);
++          if (root.current) root.current.onCreated(store)
+         }
+       });
+     }
+     return () => unmountComponentAtNode(state.scene, state.gl);
+-  }, [container, children]);
++  }, [container, canvasChildren]);
+   // TODO: remove this when r3f release a new version with the fix
+   // https://github.com/pmndrs/react-three-fiber/pull/1545
+   React.useEffect(() => {
+@@ -2108,6 +2115,15 @@
+  * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
+  */
+ const GrandCanvas = /*#__PURE__*/React.forwardRef(function GrandCanvas(props, ref) {
++  const {
++    ReactCurrentOwner
++  } = React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
++  const prevOwner = ReactCurrentOwner.current;
++  try {
++    ReactCurrentOwner.current = null;
++    return React.createElement(Canvas, { ...props,
++      ref
++    });
++  } finally {
++    ReactCurrentOwner.current = prevOwner;
++  }
+   return /*#__PURE__*/React.createElement(Canvas, { ...props,
+     ref: ref
+   });
+diff --git a/node_modules/@react-three/fiber/package.json b/node_modules/@react-three/fiber/package.json
+index 396860d..7a684b5 100644
+--- a/node_modules/@react-three/fiber/package.json
++++ b/node_modules/@react-three/fiber/package.json
+@@ -62,7 +62,8 @@
+     "zustand": ">=3.0",
+     "react": ">=18.0",
+     "react-dom": ">=18.0",
+-    "three": ">=0.137"
++    "three": ">=0.137",
++    "react-reconciler": "0.26.2"
+   },
+   "devDependencies": {
+     "@babel/core": "^7.19.6",
