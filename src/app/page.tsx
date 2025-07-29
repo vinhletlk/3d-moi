@@ -77,8 +77,6 @@ export default function Home() {
     resolver: zodResolver(OrderInputSchema),
     defaultValues: {
       customerName: "",
-      customerPhone: "",
-      customerEmail: "",
       customerAddress: "",
     },
   });
@@ -627,32 +625,6 @@ export default function Home() {
                                             <FormLabel>Họ và Tên</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="Nguyễn Văn A" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="customerPhone"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Số điện thoại</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="09xxxxxxxx" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="customerEmail"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Email</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="example@email.com" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>

@@ -26,15 +26,14 @@ export type ConsultationOutput = z.infer<typeof ConsultationOutputSchema>;
 
 export const OrderInputSchema = z.object({
     customerName: z.string().min(2, { message: "Họ tên phải có ít nhất 2 ký tự." }),
-    customerPhone: z.string().regex(/^(0?)(3[2-9]|5[6|8|9]|7[0|6-9]|8[0-6|8|9]|9[0-4|6-9])[0-9]{7}$/, { message: "Số điện thoại không hợp lệ." }),
-    customerEmail: z.string().email({ message: "Địa chỉ email không hợp lệ." }),
     customerAddress: z.string().min(10, { message: "Địa chỉ phải có ít nhất 10 ký tự." }),
-    orderDetails: ConsultationInputSchema.optional(), // We'll add this in the handler
+    orderDetails: ConsultationInputSchema.optional(),
 });
 export type OrderInput = z.infer<typeof OrderInputSchema>;
 
+// This schema is no longer used for generating confirmations, but we keep a simple one
+// in case we want to add back AI processing later.
 export const OrderOutputSchema = z.object({
-    confirmationEmail: z.string().describe("The full confirmation email body to be sent to the customer, formatted in Markdown."),
-    confirmationSms: z.string().describe("A short SMS confirmation message to be sent to the customer."),
+    internalNote: z.string().describe("An internal note for the order processing team."),
 });
 export type OrderOutput = z.infer<typeof OrderOutputSchema>;

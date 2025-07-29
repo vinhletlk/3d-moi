@@ -82,7 +82,7 @@ export default async function OrdersPage() {
                                     <TableRow>
                                         <TableHead className="w-[150px]">Ngày đặt</TableHead>
                                         <TableHead>Khách hàng</TableHead>
-                                        <TableHead>Liên hệ</TableHead>
+                                        <TableHead>Địa chỉ</TableHead>
                                         <TableHead>Chi tiết đơn hàng</TableHead>
                                         <TableHead className="text-right">Tổng tiền</TableHead>
                                     </TableRow>
@@ -93,11 +93,9 @@ export default async function OrdersPage() {
                                             <TableCell className="font-medium">{formatDate(order.createdAt)}</TableCell>
                                             <TableCell>
                                                 <div className="font-bold">{order.customerName}</div>
-                                                <div className="text-sm text-muted-foreground">{order.customerAddress}</div>
                                             </TableCell>
                                              <TableCell>
-                                                <div>{order.customerPhone}</div>
-                                                <div className="text-sm text-muted-foreground">{order.customerEmail}</div>
+                                                <div className="text-sm text-muted-foreground">{order.customerAddress}</div>
                                             </TableCell>
                                             <TableCell>
                                                 <div>{order.orderDetails?.fileName}</div>
