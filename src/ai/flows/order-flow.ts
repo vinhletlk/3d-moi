@@ -1,16 +1,33 @@
 'use server';
 /**
- * @fileOverview A flow to process customer orders and generate confirmation messages.
+ * @fileOverview A flow to process customer orders, save them to Firestore, and generate confirmation messages.
  * 
  * - processOrder - A function that handles the order submission.
  */
+require('dotenv').config();
 import { ai } from '@/ai/genkit';
 import { OrderInputSchema, OrderOutputSchema, type OrderInput, type OrderOutput } from '../schema';
 import { Resend } from 'resend';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export async function processOrder(input: OrderInput): Promise<OrderOutput> {
   const result = await processOrderFlow(input);
   
+  // Save order to Firestore
+  try {
+    await addDoc(collection(db, "orders"), {
+      ...input,
+      createdAt: serverTimestamp(),
+    });
+    console.log("Order successfully saved to Firestore.");
+  } catch (error) {
+    console.error("Error saving order to Firestore:", error);
+    // Decide if the flow should fail if the DB write fails.
+    // For now, we'll log the error but continue to send the email.
+  }
+
+  // --- Email Sending Logic ---
   if (!process.env.RESEND_API_KEY) {
     console.warn("RESEND_API_KEY is not set. Skipping actual email sending.");
     console.log("==================================================");

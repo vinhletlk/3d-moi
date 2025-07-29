@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle, Wand2, Send } from "lucide-react";
+import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle, Wand2, Send, ListOrdered } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { StlParser } from "@/lib/stl-parser";
 import { consultAI } from "@/ai/flows/consult-flow";
@@ -21,6 +21,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { processOrder } from "@/ai/flows/order-flow";
 import { Textarea } from "@/components/ui/textarea";
+import Link from 'next/link';
 
 
 type PrintTechnology = "fdm" | "resin";
@@ -278,7 +279,15 @@ export default function Home() {
                     <Scale className="w-8 h-8 text-primary" />
                     <h1 className="text-xl sm:text-2xl font-bold text-foreground">in3D</h1>
                 </div>
-                <Button variant="ghost">Đăng nhập</Button>
+                 <div className="flex items-center space-x-2">
+                    <Button variant="ghost" asChild>
+                        <Link href="/orders">
+                            <ListOrdered className="mr-2 h-4 w-4"/>
+                            Quản lý Đơn hàng
+                        </Link>
+                    </Button>
+                    <Button variant="ghost">Đăng nhập</Button>
+                </div>
             </div>
         </div>
       </header>
