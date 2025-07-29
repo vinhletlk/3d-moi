@@ -4,14 +4,16 @@
  * 
  * - processOrder - A function that handles the order submission.
  */
-require('dotenv').config();
 import { ai } from '@/ai/genkit';
 import { OrderInputSchema, OrderOutputSchema, type OrderInput, type OrderOutput } from '../schema';
 import { Resend } from 'resend';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
-async function generateAndSendConfirmations(orderId: string, input: OrderInput): Promise<void> {
+// Read the API key once at the module level.
+const resendApiKey = process.env.RESEND_API_KEY;
+
+async function generateAndSendConfirmations(orderId: string, input: OrderInput, apiKey: string | undefined): Promise<void> {
     console.log(`Starting background confirmation generation for order ${orderId}...`);
     try {
         const { output } = await prompt(input);
@@ -22,7 +24,7 @@ async function generateAndSendConfirmations(orderId: string, input: OrderInput):
         }
 
         // --- Email Sending Logic ---
-        if (!process.env.RESEND_API_KEY) {
+        if (!apiKey) {
             console.warn("RESEND_API_KEY is not set. Skipping actual email sending.");
             console.log("==================================================");
             console.log(" MÔ PHỎNG GỬI THÔNG BÁO ĐƠN HÀNG (API Key chưa được cấu hình)");
@@ -34,7 +36,7 @@ async function generateAndSendConfirmations(orderId: string, input: OrderInput):
             console.log("==================================================");
         } else {
              try {
-                const resend = new Resend(process.env.RESEND_API_KEY);
+                const resend = new Resend(apiKey);
                 await resend.emails.send({
                 from: 'in3D <onboarding@resend.dev>', // Replace with your verified domain if you have one
                 to: [input.customerEmail],
@@ -68,7 +70,8 @@ export async function processOrder(input: OrderInput): Promise<{ success: boolea
     console.log(`Order successfully saved to Firestore with ID: ${docRef.id}.`);
     
     // Fire-and-forget: Start the AI generation but don't wait for it to complete.
-    generateAndSendConfirmations(docRef.id, input).catch(console.error);
+    // Pass the API key explicitly to the background function.
+    generateAndSendConfirmations(docRef.id, input, resendApiKey).catch(console.error);
 
     return { success: true, orderId: docRef.id };
   } catch (error: any) {
