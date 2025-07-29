@@ -252,19 +252,23 @@ export default function Home() {
     };
 
     try {
-      await processOrder({ ...values, orderDetails });
-      setIsOrderDialogOpen(false);
-      form.reset();
-      toast({
-        title: "Đặt hàng thành công!",
-        description: "Cảm ơn bạn đã đặt hàng. Chúng tôi sẽ liên hệ với bạn sớm nhất.",
-      });
-    } catch (error) {
+      const result = await processOrder({ ...values, orderDetails });
+      if (result.success) {
+        setIsOrderDialogOpen(false);
+        form.reset();
+        toast({
+          title: "Đặt hàng thành công!",
+          description: "Cảm ơn bạn. Chúng tôi sẽ sớm liên hệ để xác nhận.",
+        });
+      } else {
+        throw new Error(result.error || 'Lỗi không xác định');
+      }
+    } catch (error: any) {
        console.error("Order submission error:", error);
        toast({
          variant: "destructive",
          title: "Lỗi đặt hàng",
-         description: "Đã có lỗi xảy ra. Vui lòng thử lại sau."
+         description: error.message || "Đã có lỗi xảy ra. Vui lòng thử lại sau."
        });
     } finally {
         setIsSubmittingOrder(false);

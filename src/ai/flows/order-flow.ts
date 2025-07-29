@@ -11,57 +11,70 @@ import { Resend } from 'resend';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
-export async function processOrder(input: OrderInput): Promise<OrderOutput> {
-  const result = await processOrderFlow(input);
-  
-  // Save order to Firestore
+async function generateAndSendConfirmations(orderId: string, input: OrderInput): Promise<void> {
+    console.log(`Starting background confirmation generation for order ${orderId}...`);
+    try {
+        const { output } = await prompt(input);
+
+        if (!output) {
+            console.error(`AI prompt did not return an output for order ${orderId}.`);
+            return;
+        }
+
+        // --- Email Sending Logic ---
+        if (!process.env.RESEND_API_KEY) {
+            console.warn("RESEND_API_KEY is not set. Skipping actual email sending.");
+            console.log("==================================================");
+            console.log(" MÔ PHỎNG GỬI THÔNG BÁO ĐƠN HÀNG (API Key chưa được cấu hình)");
+            console.log("==================================================");
+            console.log(`\n----- Nội dung Email sẽ gửi tới khách hàng ${input.customerEmail} cho đơn hàng ${orderId} -----\n`);
+            console.log(output.confirmationEmail);
+            console.log("\n--------------------------------------------\n");
+            console.log("Lưu ý: Để gửi email thật, hãy thêm RESEND_API_KEY vào tệp .env");
+            console.log("==================================================");
+        } else {
+             try {
+                const resend = new Resend(process.env.RESEND_API_KEY);
+                await resend.emails.send({
+                from: 'in3D <onboarding@resend.dev>', // Replace with your verified domain if you have one
+                to: [input.customerEmail],
+                subject: 'Xác nhận đơn hàng in 3D từ in3D',
+                html: output.confirmationEmail.replace(/\n/g, '<br>'), // Basic Markdown to HTML
+                });
+                console.log(`Confirmation email sent to ${input.customerEmail} for order ${orderId}`);
+            } catch (error) {
+                console.error(`Failed to send email for order ${orderId}:`, error);
+                // In a real-world scenario, you might add more robust error handling or retry logic.
+            }
+        }
+    
+        // SMS sending logic would go here
+        console.log(`\n----- Nội dung SMS (chưa gửi đi) cho đơn hàng ${orderId} ------\n`);
+        console.log(output.confirmationSms);
+        console.log("\n--------------------------------------------\n");
+
+    } catch (e) {
+        console.error(`Error generating confirmations for order ${orderId}:`, e);
+    }
+}
+
+
+export async function processOrder(input: OrderInput): Promise<{ success: boolean; orderId?: string; error?: string }> {
   try {
-    await addDoc(collection(db, "orders"), {
+    const docRef = await addDoc(collection(db, "orders"), {
       ...input,
       createdAt: serverTimestamp(),
     });
-    console.log("Order successfully saved to Firestore.");
-  } catch (error) {
+    console.log(`Order successfully saved to Firestore with ID: ${docRef.id}.`);
+    
+    // Fire-and-forget: Start the AI generation but don't wait for it to complete.
+    generateAndSendConfirmations(docRef.id, input).catch(console.error);
+
+    return { success: true, orderId: docRef.id };
+  } catch (error: any) {
     console.error("Error saving order to Firestore:", error);
-    // Decide if the flow should fail if the DB write fails.
-    // For now, we'll log the error but continue to send the email.
+    return { success: false, error: error.message };
   }
-
-  // --- Email Sending Logic ---
-  if (!process.env.RESEND_API_KEY) {
-    console.warn("RESEND_API_KEY is not set. Skipping actual email sending.");
-    console.log("==================================================");
-    console.log(" MÔ PHỎNG GỬI THÔNG BÁO ĐƠN HÀNG (API Key chưa được cấu hình)");
-    console.log("==================================================");
-    console.log("\n----- Nội dung Email sẽ gửi tới khách hàng -----\n");
-    console.log(result.confirmationEmail);
-    console.log("\n--------------------------------------------\n");
-    console.log("Lưu ý: Để gửi email thật, hãy thêm RESEND_API_KEY vào tệp .env");
-    console.log("==================================================");
-    return result;
-  }
-
-  try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from: 'in3D <onboarding@resend.dev>', // Replace with your verified domain if you have one
-      to: [input.customerEmail],
-      subject: 'Xác nhận đơn hàng in 3D từ in3D',
-      html: result.confirmationEmail.replace(/\n/g, '<br>'), // Basic Markdown to HTML
-    });
-    console.log(`Confirmation email sent to ${input.customerEmail}`);
-  } catch (error) {
-    console.error("Failed to send email:", error);
-    // Even if email fails, we don't want to block the user.
-    // In a real-world scenario, you might add more robust error handling or retry logic.
-  }
-  
-  // SMS sending logic would go here if you integrate a service like Twilio.
-  console.log("\n----- Nội dung SMS (chưa gửi đi) ------\n");
-  console.log(result.confirmationSms);
-  console.log("\n--------------------------------------------\n");
-
-  return result;
 }
 
 const prompt = ai.definePrompt({
@@ -107,6 +120,8 @@ TASK 2: GENERATE CONFIRMATION SMS
 `,
 });
 
+// The main flow is no longer directly called by the client-side code.
+// It is now part of the background processing.
 const processOrderFlow = ai.defineFlow(
   {
     name: 'processOrderFlow',
