@@ -22,6 +22,21 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { processOrder } from "@/ai/flows/order-flow";
 import { Textarea } from "@/components/ui/textarea";
 import Link from 'next/link';
+import { Skeleton } from "@/components/ui/skeleton";
+
+
+const In3dLogo = () => (
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M11.9619 23.6301L14.632 27.2341C15.1161 27.8721 16.1242 27.8721 16.6083 27.2341L19.2783 23.6301" stroke="#3F51B5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M15.6201 19.3398V27.4268" stroke="#3F51B5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M19.2783 8.36987L16.6083 4.76587C16.1242 4.12787 15.1161 4.12787 14.632 4.76587L11.9619 8.36987" stroke="#3F51B5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M15.6201 4.57227V12.6593" stroke="#3F51B5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M8.36987 19.2783L4.76587 16.6083C4.12787 16.1242 4.12787 15.1161 4.76587 14.632L8.36987 11.9619" stroke="#3F51B5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M4.57227 15.6201H12.6593" stroke="#3F51B5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M23.6301 11.9619L27.2341 14.632C27.8721 15.1161 27.8721 16.1242 27.2341 16.6083L23.6301 19.2783" stroke="#3F51B5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M27.4268 15.6201H19.3398" stroke="#3F51B5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+);
 
 
 type PrintTechnology = "fdm" | "resin";
@@ -50,7 +65,7 @@ export default function Home() {
   const [technology, setTechnology] = useState<PrintTechnology>("fdm");
   const [infillPercentage, setInfillPercentage] = useState<number>(20);
   const [shellThickness, setShellThickness] = useState<number>(2.0);
-
+  
   const [isConsulting, setIsConsulting] = useState<boolean>(false);
   const [consultationResult, setConsultationResult] = useState<ConsultationOutput | null>(null);
   const [consultationError, setConsultationError] = useState<string | null>(null);
@@ -278,11 +293,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen w-full bg-background font-sans text-foreground">
-      <header className="bg-card border-b border-border">
+      <header className="bg-card/80 backdrop-blur-sm sticky top-0 z-40 border-b">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
                 <div className="flex items-center space-x-2">
-                    <Scale className="w-8 h-8 text-primary" />
+                    <In3dLogo />
                     <h1 className="text-xl sm:text-2xl font-bold text-foreground">in3D</h1>
                 </div>
                  <div className="flex items-center space-x-2">
@@ -310,7 +325,17 @@ export default function Home() {
             </CardHeader>
             <CardContent className="p-4 sm:p-6 space-y-6">
               {!fileName && !isLoading && (
-                <div className="flex flex-col items-center justify-center p-6 sm:p-8 border-2 border-dashed border-border rounded-lg text-center transition-colors hover:border-primary hover:bg-accent">
+                <div 
+                    className="flex flex-col items-center justify-center p-6 sm:p-10 border-2 border-dashed border-border rounded-lg text-center transition-colors hover:border-primary/50 hover:bg-primary/5"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                        e.preventDefault();
+                        const files = e.dataTransfer.files;
+                        if (files && files.length > 0) {
+                            handleFileChange({ target: { files } } as any);
+                        }
+                    }}
+                >
                   <input
                     type="file"
                     ref={fileInputRef}
@@ -341,53 +366,101 @@ export default function Home() {
               {results && !isLoading && (
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-start">
                    <div className="space-y-6">
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                         <Card className="p-4 bg-secondary/30 rounded-lg border border-border flex items-center gap-4">
-                             <Box className="w-10 h-10 text-primary/50 flex-shrink-0" />
+                     <div className="p-4 bg-card rounded-lg border flex items-center justify-between gap-4">
+                         <div className="flex items-center gap-4 overflow-hidden">
+                             <Box className="w-10 h-10 text-primary/80 flex-shrink-0" />
                              <div className="flex-grow overflow-hidden">
-                                 <p className="text-sm font-semibold text-foreground truncate">{fileName}</p>
+                                 <p className="text-sm font-semibold text-foreground truncate" title={fileName}>{fileName}</p>
                                  <p className="text-xs text-muted-foreground">Tệp đã tải lên</p>
                              </div>
-                         </Card>
-                         
-                         <div className="flex items-center gap-2 md:justify-self-end">
+                         </div>
+                         <div className="flex items-center gap-2 flex-shrink-0">
                             {!consultationResult && !isConsulting && !consultationError && (
                               <Button onClick={handleConsultation}>
-                                <Sparkles className="mr-2 h-5 w-5" />
+                                <Sparkles className="mr-2 h-4 w-4" />
                                 Tư vấn
                               </Button>
                             )}
                          </div>
                      </div>
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold text-foreground border-b pb-2">Thông số mô hình</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                              <CardTitle className="text-sm font-medium">Thể tích</CardTitle>
+                              <Ruler className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                              <div className="text-xl sm:text-2xl font-bold">
+                                {results.volume.toFixed(2)} <span className="text-sm sm:text-base font-normal text-muted-foreground">cm³</span>
+                              </div>
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                              <CardTitle className="text-sm font-medium">Bề mặt</CardTitle>
+                              <Shell className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                              <div className="text-xl sm:text-2xl font-bold">
+                                {results.surfaceArea.toFixed(2)} <span className="text-sm sm:text-base font-normal text-muted-foreground">cm²</span>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </div>
+                      {isConsulting && (
+                        <div className="flex flex-col items-center justify-center space-y-4 p-6 min-h-[150px] bg-card rounded-lg">
+                          <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
+                          <p className="text-lg font-semibold">AI đang phân tích...</p>
+                          <p className="text-sm text-muted-foreground text-center">Trợ lý ảo đang chuẩn bị lời khuyên tối ưu cho bạn.</p>
+                        </div>
+                      )}
+
+                      {consultationError && (
+                        <Card className="bg-destructive/10 border-destructive/50 text-destructive-foreground">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <AlertTriangle />
+                                    Lỗi Tư Vấn
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p>{consultationError}</p>
+                                <Button onClick={handleConsultation} variant="destructive" className="mt-4">
+                                    Thử lại
+                                </Button>
+                            </CardContent>
+                        </Card>
+                      )}
+
+                      {consultationResult && !isConsulting && (
+                         <Card className="bg-primary/5">
+                            <CardHeader>
+                                <CardTitle className="flex items-center text-xl font-bold text-primary">
+                                  <Sparkles className="mr-2 h-6 w-6" />
+                                  Tư vấn từ Trợ lý AI
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="prose prose-sm sm:prose-base max-w-none text-foreground prose-h3:text-primary prose-strong:text-foreground">
+                                  <ReactMarkdown>{consultationResult.advice}</ReactMarkdown>
+                                </div>
+                                {canApplySuggestion && (
+                                   <Button onClick={applyAISuggestion}>
+                                        <Wand2 className="mr-2 h-4 w-4" />
+                                        Áp dụng đề xuất của AI
+                                   </Button>
+                                )}
+                            </CardContent>
+                         </Card>
+                      )}
+
                    </div>
                   <div className="space-y-6">
                     <div className="space-y-6">
-                      <h3 className="text-lg font-semibold text-foreground border-b pb-2">Thông số mô hình</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <Card className="bg-secondary/80">
-                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Thể tích</CardTitle>
-                            <Ruler className="h-4 w-4 text-muted-foreground" />
-                          </CardHeader>
-                          <CardContent>
-                            <div className="text-xl sm:text-2xl font-bold">
-                              {results.volume.toFixed(2)} <span className="text-sm sm:text-base font-normal text-muted-foreground">cm³</span>
-                            </div>
-                          </CardContent>
-                        </Card>
-                        <Card className="bg-secondary/80">
-                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Bề mặt</CardTitle>
-                            <Shell className="h-4 w-4 text-muted-foreground" />
-                          </CardHeader>
-                          <CardContent>
-                            <div className="text-xl sm:text-2xl font-bold">
-                              {results.surfaceArea.toFixed(2)} <span className="text-sm sm:text-base font-normal text-muted-foreground">cm²</span>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
-
+                      
                       <div className="space-y-4">
                         <h3 className="text-lg font-semibold text-foreground border-b pb-2">Tùy chọn in</h3>
                          <div className="space-y-3">
@@ -405,7 +478,7 @@ export default function Home() {
                               <RadioGroupItem value="fdm" id="fdm" className="peer sr-only" />
                               <Label
                                 htmlFor="fdm"
-                                className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                                className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent/10 hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
                               >
                                 <Atom className="mb-2 h-6 w-6" />
                                 FDM
@@ -415,7 +488,7 @@ export default function Home() {
                               <RadioGroupItem value="resin" id="resin" className="peer sr-only" />
                               <Label
                                 htmlFor="resin"
-                                className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                                className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent/10 hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
                               >
                                 <Droplets className="mb-2 h-6 w-6" />
                                 Resin
@@ -474,7 +547,7 @@ export default function Home() {
 
                     <div className="space-y-4">
                        <h3 className="text-lg font-semibold text-foreground border-b pb-2">Báo giá ước tính</h3>
-                       <Card className="bg-secondary/80">
+                       <Card>
                           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Cân nặng ước tính</CardTitle>
                             <Weight className="h-4 w-4 text-muted-foreground" />
@@ -486,7 +559,7 @@ export default function Home() {
                             <p className="text-xs text-muted-foreground pt-1">(Đã bao gồm support)</p>
                           </CardContent>
                         </Card>
-                       <div className="bg-gradient-to-br from-primary/80 to-primary rounded-lg p-6 text-center text-primary-foreground shadow-xl">
+                       <div className="bg-gradient-to-br from-accent/90 to-accent rounded-lg p-6 text-center text-accent-foreground shadow-xl">
                         <Label className="text-md sm:text-lg font-semibold opacity-90">Tổng chi phí</Label>
                         <div className="text-4xl sm:text-5xl font-extrabold tracking-tight mt-1">
                           {totalCost.toLocaleString('vi-VN', { maximumFractionDigits: 0, minimumFractionDigits: 0 })} đ
@@ -500,58 +573,9 @@ export default function Home() {
                   </div>
                 </div>
               )}
-
-              {isConsulting && (
-                <div className="flex flex-col items-center justify-center space-y-4 p-6 min-h-[150px] bg-secondary/30 rounded-lg">
-                  <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
-                  <p className="text-lg font-semibold">AI đang phân tích...</p>
-                  <p className="text-sm text-muted-foreground text-center">Trợ lý ảo đang chuẩn bị lời khuyên tối ưu cho bạn.</p>
-                </div>
-              )}
-
-              {consultationError && (
-                <Card className="bg-destructive/10 border-destructive/50 text-destructive-foreground">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <AlertTriangle />
-                            Lỗi Tư Vấn
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p>{consultationError}</p>
-                        <Button onClick={handleConsultation} variant="destructive" className="mt-4">
-                            Thử lại
-                        </Button>
-                    </CardContent>
-                </Card>
-              )}
-
-              {consultationResult && !isConsulting && (
-                 <Card className="bg-secondary/30">
-                    <CardHeader>
-                        <CardTitle className="flex items-center text-xl font-bold text-primary">
-                          <Sparkles className="mr-2 h-6 w-6" />
-                          Tư vấn từ Trợ lý AI
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="prose prose-invert prose-sm sm:prose-base max-w-none text-foreground">
-                          <ReactMarkdown>{consultationResult.advice}</ReactMarkdown>
-                        </div>
-                        {canApplySuggestion && (
-                           <Button onClick={applyAISuggestion}>
-                                <Wand2 className="mr-2 h-4 w-4" />
-                                Áp dụng đề xuất của AI
-                           </Button>
-                        )}
-                    </CardContent>
-                 </Card>
-              )}
-
-
             </CardContent>
             { (fileName || results) && !isLoading && (
-              <CardFooter className="p-4 sm:p-6 bg-transparent border-t grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <CardFooter className="p-4 sm:p-6 bg-card/80 border-t grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <Button onClick={handleReset} variant="outline" className="w-full font-semibold">
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Tính toán lại
@@ -644,7 +668,7 @@ export default function Home() {
           </Card>
         </div>
       </main>
-      <footer className="bg-card border-t mt-auto">
+      <footer className="bg-card/80 border-t mt-auto">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-sm text-muted-foreground">
               © {new Date().getFullYear()} in3D. All rights reserved.
           </div>
