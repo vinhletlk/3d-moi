@@ -335,13 +335,15 @@ export default function Home() {
               {results && !isLoading && (
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-start">
                   <div className="space-y-6">
-                     <Card className="aspect-square w-full bg-secondary/30 rounded-lg border border-border flex flex-col items-center justify-center p-4">
-                        <Box className="w-20 h-20 sm:w-24 sm:h-24 text-primary/50" />
-                        <p className="text-md sm:text-lg font-semibold mt-4 text-foreground text-center">{fileName}</p>
-                        <p className="text-sm text-muted-foreground">Tệp đã tải lên</p>
-                     </Card>
+                    <Card className="p-4 bg-secondary/30 rounded-lg border border-border flex items-center gap-4">
+                        <Box className="w-12 h-12 text-primary/50 flex-shrink-0" />
+                        <div className="flex-grow overflow-hidden">
+                            <p className="text-md font-semibold text-foreground truncate">{fileName}</p>
+                            <p className="text-sm text-muted-foreground">Tệp đã tải lên</p>
+                        </div>
+                    </Card>
                      
-                     {!consultationResult && !isConsulting && !consultationError && (
+                    {!consultationResult && !isConsulting && !consultationError && (
                       <Button onClick={handleConsultation} className="w-full" size="lg">
                         <Sparkles className="mr-2 h-5 w-5" />
                         Tư vấn với AI
