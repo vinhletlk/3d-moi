@@ -8,9 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle, Wand2, CirclePlus } from "lucide-react";
+import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle, Wand2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { StlParser } from "@/lib/stl-parser";
 import { consultAI } from "@/ai/flows/consult-flow";
@@ -39,7 +38,6 @@ export default function Home() {
   const [technology, setTechnology] = useState<PrintTechnology>("fdm");
   const [infillPercentage, setInfillPercentage] = useState<number>(20);
   const [shellThickness, setShellThickness] = useState<number>(2);
-  const [addSupport, setAddSupport] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [progress, setProgress] = useState(0);
@@ -132,7 +130,6 @@ export default function Home() {
     setProgress(0);
     setConsultationResult(null);
     setConsultationError(null);
-    setAddSupport(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -160,10 +157,9 @@ export default function Home() {
     let weight = volume * density;
     let totalCost = weight * costPerGram;
 
-    if (addSupport) {
-        weight *= SUPPORT_COST_FACTOR;
-        totalCost *= SUPPORT_COST_FACTOR;
-    }
+    // Always add support cost
+    weight *= SUPPORT_COST_FACTOR;
+    totalCost *= SUPPORT_COST_FACTOR;
 
     return { weight, totalCost, costPerGram };
   };
@@ -238,7 +234,7 @@ export default function Home() {
                 Ước tính chi phí in 3D
               </CardTitle>
               <CardDescription className="text-md sm:text-lg text-muted-foreground mt-2 max-w-2xl mx-auto">
-                Tải lên tệp .STL của bạn để nhận ngay báo giá tức thì cho cả in FDM và Resin.
+                Tải lên tệp .STL để nhận ngay báo giá tức thì cho cả in FDM và Resin. Chi phí đã bao gồm support.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-4 sm:p-6 space-y-6">
@@ -396,20 +392,6 @@ export default function Home() {
                             </div>
                           </div>
                         )}
-                        <div className="space-y-3 pt-2">
-                            <div className="flex items-center justify-between">
-                                <Label className="text-base font-medium flex items-center" htmlFor="support-switch">
-                                    <CirclePlus className="mr-2 h-4 w-4" />
-                                    Thêm Support
-                                </Label>
-                                <Switch
-                                    id="support-switch"
-                                    checked={addSupport}
-                                    onCheckedChange={setAddSupport}
-                                />
-                            </div>
-                            <p className="text-sm text-muted-foreground">Tự động cộng thêm 15% chi phí và trọng lượng cho cấu trúc support.</p>
-                        </div>
                       </div>
                     </div>
 
@@ -424,7 +406,7 @@ export default function Home() {
                             <div className="text-xl sm:text-2xl font-bold">
                               {weight.toFixed(2)} <span className="text-sm sm:text-base font-normal text-muted-foreground">g</span>
                             </div>
-                             {addSupport && <p className="text-xs text-muted-foreground pt-1">(Đã bao gồm support)</p>}
+                            <p className="text-xs text-muted-foreground pt-1">(Đã bao gồm support)</p>
                           </CardContent>
                         </Card>
                        <div className="bg-gradient-to-br from-primary/80 to-primary rounded-lg p-6 text-center text-primary-foreground shadow-xl">
@@ -435,7 +417,7 @@ export default function Home() {
                          <p className="text-sm opacity-80 mt-2">
                           (@ {costPerGram.toLocaleString('vi-VN')} đ/g)
                         </p>
-                         {addSupport && <p className="text-xs opacity-80 pt-2">(Đã bao gồm chi phí support)</p>}
+                        <p className="text-xs opacity-80 pt-2">(Đã bao gồm 15% chi phí support)</p>
                       </div>
                     </div>
                   </div>
@@ -509,3 +491,4 @@ export default function Home() {
       </footer>
     </div>
   );
+}
