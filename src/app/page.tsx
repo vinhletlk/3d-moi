@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle, Wand2, Send, ListOrdered } from "lucide-react";
+import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle, Wand2, Send, ListOrdered, Eye } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { StlParser } from "@/lib/stl-parser";
 import { consultAI } from "@/ai/flows/consult-flow";
@@ -22,6 +22,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { processOrder } from "@/ai/flows/order-flow";
 import { Textarea } from "@/components/ui/textarea";
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 type PrintTechnology = "fdm" | "resin";
@@ -38,10 +40,17 @@ const COST_PER_GRAM_FDM = 1000;
 const COST_PER_GRAM_RESIN = 4000;
 const SUPPORT_COST_FACTOR = 1.15; // 15% increase for supports
 
+const StlViewer = dynamic(() => import('@/components/stl-viewer').then(mod => mod.StlViewer), {
+  ssr: false,
+  loading: () => <div className="w-full h-full flex items-center justify-center"><Skeleton className="w-full h-full" /></div>
+});
+
+
 export default function Home() {
   const [results, setResults] = useState<CalculationOutput | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [fileName, setFileName] = useState<string>("");
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [technology, setTechnology] = useState<PrintTechnology>("fdm");
   const [infillPercentage, setInfillPercentage] = useState<number>(20);
   const [shellThickness, setShellThickness] = useState<number>(2);
@@ -98,6 +107,7 @@ export default function Home() {
     }
 
     setFileName(file.name);
+    setFileUrl(URL.createObjectURL(file));
     setIsLoading(true);
     setResults(null);
     setConsultationResult(null);
@@ -125,6 +135,7 @@ export default function Home() {
         });
         setFileName("");
         setIsLoading(false);
+        setFileUrl(null);
       }
     };
     reader.onerror = (error) => {
@@ -136,6 +147,7 @@ export default function Home() {
         });
         setIsLoading(false);
         setFileName("");
+        setFileUrl(null);
     };
   };
 
@@ -147,6 +159,10 @@ export default function Home() {
     setResults(null);
     setIsLoading(false);
     setFileName("");
+    if(fileUrl) {
+      URL.revokeObjectURL(fileUrl);
+      setFileUrl(null);
+    }
     setProgress(0);
     setConsultationResult(null);
     setConsultationError(null);
@@ -334,24 +350,49 @@ export default function Home() {
               
               {results && !isLoading && (
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-start">
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                        <Card className="p-4 bg-secondary/30 rounded-lg border border-border flex items-center gap-4">
-                            <Box className="w-10 h-10 text-primary/50 flex-shrink-0" />
-                            <div className="flex-grow overflow-hidden">
-                                <p className="text-sm font-semibold text-foreground truncate">{fileName}</p>
-                                <p className="text-xs text-muted-foreground">Tệp đã tải lên</p>
-                            </div>
-                        </Card>
-                        
-                        {!consultationResult && !isConsulting && !consultationError && (
-                          <Button onClick={handleConsultation} className="w-full md:w-auto md:justify-self-end">
-                            <Sparkles className="mr-2 h-5 w-5" />
-                            Tư vấn với AI
-                          </Button>
-                        )}
-                    </div>
-                  </div>
+                   <div className="space-y-6">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                         <Card className="p-4 bg-secondary/30 rounded-lg border border-border flex items-center gap-4">
+                             <Box className="w-10 h-10 text-primary/50 flex-shrink-0" />
+                             <div className="flex-grow overflow-hidden">
+                                 <p className="text-sm font-semibold text-foreground truncate">{fileName}</p>
+                                 <p className="text-xs text-muted-foreground">Tệp đã tải lên</p>
+                             </div>
+                         </Card>
+                         
+                         <div className="flex items-center gap-2 md:justify-self-end">
+                            {fileUrl && (
+                               <Dialog>
+                                   <DialogTrigger asChild>
+                                       <Button variant="outline">
+                                           <Eye className="mr-2 h-5 w-5" />
+                                           Xem trước
+                                       </Button>
+                                   </DialogTrigger>
+                                   <DialogContent className="max-w-3xl h-3/4 flex flex-col">
+                                       <DialogHeader>
+                                           <DialogTitle>Xem trước: {fileName}</DialogTitle>
+                                       </DialogHeader>
+                                       <div className="flex-grow bg-muted rounded-lg border">
+                                           <StlViewer fileUrl={fileUrl} />
+                                       </div>
+                                       <DialogFooter>
+                                            <DialogClose asChild>
+                                                <Button type="button">Đóng</Button>
+                                            </DialogClose>
+                                       </DialogFooter>
+                                   </DialogContent>
+                               </Dialog>
+                            )}
+                            {!consultationResult && !isConsulting && !consultationError && (
+                              <Button onClick={handleConsultation}>
+                                <Sparkles className="mr-2 h-5 w-5" />
+                                Tư vấn
+                              </Button>
+                            )}
+                         </div>
+                     </div>
+                   </div>
                   <div className="space-y-6">
                     <div className="space-y-6">
                       <h3 className="text-lg font-semibold text-foreground border-b pb-2">Thông số mô hình</h3>
