@@ -47,6 +47,10 @@ export default function Home() {
   const { toast } = useToast();
   const [progress, setProgress] = useState(0);
 
+  const [technology, setTechnology] = useState<PrintTechnology>("fdm");
+  const [infillPercentage, setInfillPercentage] = useState<number>(20);
+  const [shellThickness, setShellThickness] = useState<number>(2.0);
+
   const [isConsulting, setIsConsulting] = useState<boolean>(false);
   const [consultationResult, setConsultationResult] = useState<ConsultationOutput | null>(null);
   const [consultationError, setConsultationError] = useState<string | null>(null);
