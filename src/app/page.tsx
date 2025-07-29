@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, type ChangeEvent, useEffect } from "react";
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,10 +9,13 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight, Box } from "lucide-react";
+import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { app } from "@/lib/firebase"; // Import a initialized firebase app
 import { StlParser } from "@/lib/stl-parser";
+import { consultAI, type ConsultationInput } from "@/ai/flows/consult-flow";
+import ReactMarkdown from 'react-markdown';
+
 
 type PrintTechnology = "fdm" | "resin";
 
@@ -37,6 +41,10 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [progress, setProgress] = useState(0);
+
+  const [isConsulting, setIsConsulting] = useState<boolean>(false);
+  const [consultationResult, setConsultationResult] = useState<string | null>(null);
+  const [consultationError, setConsultationError] = useState<string | null>(null);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -72,6 +80,8 @@ export default function Home() {
     setFileName(file.name);
     setIsLoading(true);
     setResults(null);
+    setConsultationResult(null);
+    setConsultationError(null);
 
     const reader = new FileReader();
     reader.readAsArrayBuffer(file);
@@ -118,6 +128,8 @@ export default function Home() {
     setIsLoading(false);
     setFileName("");
     setProgress(0);
+    setConsultationResult(null);
+    setConsultationError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -153,6 +165,36 @@ export default function Home() {
   };
 
   const { weight, totalCost, costPerGram } = calculateCost();
+
+  const handleConsultation = async () => {
+    if (!results) return;
+
+    setIsConsulting(true);
+    setConsultationResult(null);
+    setConsultationError(null);
+
+    const input: ConsultationInput = {
+      fileName: fileName,
+      technology: technology,
+      volume: results.volume,
+      surfaceArea: results.surfaceArea,
+      estimatedWeight: weight,
+      estimatedCost: totalCost,
+      ...(technology === 'fdm'
+        ? { infillPercentage: infillPercentage }
+        : { shellThickness: shellThickness }),
+    };
+
+    try {
+      const response = await consultAI(input);
+      setConsultationResult(response.advice);
+    } catch (error) {
+      console.error("AI Consultation Error:", error);
+      setConsultationError("Xin lỗi, đã có lỗi xảy ra khi kết nối với trợ lý AI. Vui lòng thử lại sau.");
+    } finally {
+      setIsConsulting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen w-full bg-background font-sans text-foreground">
@@ -216,6 +258,13 @@ export default function Home() {
                         <p className="text-md sm:text-lg font-semibold mt-4 text-foreground text-center">{fileName}</p>
                         <p className="text-sm text-muted-foreground">Tệp đã tải lên</p>
                      </Card>
+                     
+                     {!consultationResult && !isConsulting && !consultationError && (
+                      <Button onClick={handleConsultation} className="w-full" size="lg">
+                        <Sparkles className="mr-2 h-5 w-5" />
+                        Tư vấn với AI
+                      </Button>
+                    )}
                   </div>
                   <div className="space-y-6">
                     <div className="space-y-6">
@@ -251,7 +300,11 @@ export default function Home() {
                           <Label className="text-base font-medium">Công nghệ in</Label>
                           <RadioGroup
                             value={technology}
-                            onValueChange={(value) => setTechnology(value as PrintTechnology)}
+                            onValueChange={(value) => {
+                                setTechnology(value as PrintTechnology);
+                                setConsultationResult(null); // Reset consultation on change
+                                setConsultationError(null);
+                            }}
                             className="grid grid-cols-2 gap-4"
                           >
                             <div>
@@ -286,7 +339,11 @@ export default function Home() {
                               <Slider
                                 id="infill"
                                 value={[infillPercentage]}
-                                onValueChange={(value) => setInfillPercentage(value[0])}
+                                onValueChange={(value) => {
+                                    setInfillPercentage(value[0]);
+                                    setConsultationResult(null);
+                                    setConsultationError(null);
+                                }}
                                 max={100}
                                 step={5}
                                 className="flex-1"
@@ -305,7 +362,11 @@ export default function Home() {
                               <Slider
                                 id="shell"
                                 value={[shellThickness]}
-                                onValueChange={(value) => setShellThickness(value[0])}
+                                onValueChange={(value) => {
+                                    setShellThickness(value[0]);
+                                    setConsultationResult(null);
+                                    setConsultationError(null);
+                                }}
                                 max={10}
                                 step={0.1}
                                 className="flex-1"
@@ -343,6 +404,47 @@ export default function Home() {
                   </div>
                 </div>
               )}
+
+              {isConsulting && (
+                <div className="flex flex-col items-center justify-center space-y-4 p-6 min-h-[150px] bg-secondary/30 rounded-lg">
+                  <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
+                  <p className="text-lg font-semibold">AI đang phân tích...</p>
+                  <p className="text-sm text-muted-foreground text-center">Trợ lý ảo đang chuẩn bị lời khuyên tối ưu cho bạn.</p>
+                </div>
+              )}
+
+              {consultationError && (
+                <Card className="bg-destructive/10 border-destructive/50 text-destructive-foreground">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <AlertTriangle />
+                            Lỗi Tư Vấn
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p>{consultationError}</p>
+                        <Button onClick={handleConsultation} variant="destructive" className="mt-4">
+                            Thử lại
+                        </Button>
+                    </CardContent>
+                </Card>
+              )}
+
+              {consultationResult && !isConsulting && (
+                 <Card className="bg-secondary/30">
+                    <CardHeader>
+                        <CardTitle className="flex items-center text-xl font-bold text-primary">
+                          <Sparkles className="mr-2 h-6 w-6" />
+                          Tư vấn từ Trợ lý AI
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="prose prose-invert prose-sm sm:prose-base max-w-none text-foreground">
+                        <ReactMarkdown>{consultationResult}</ReactMarkdown>
+                    </CardContent>
+                 </Card>
+              )}
+
+
             </CardContent>
             { (fileName || results) && !isLoading && (
               <CardFooter className="p-4 sm:p-6 bg-transparent border-t">
