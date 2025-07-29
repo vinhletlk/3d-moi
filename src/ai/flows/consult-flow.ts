@@ -35,6 +35,13 @@ Here are the details of their model and print settings:
 - Resin Shell Thickness: {{{shellThickness}}} mm
 {{/if}}
 
+{{#if userPrompt}}
+The user has a specific question: "{{{userPrompt}}}"
+
+Please answer the user's question directly, using the model's technical details above to inform your response. Structure your answer clearly in Markdown under the "advice" field. If the question is about material, provide detailed advice on suitable materials for the chosen technology and the model's characteristics.
+{{else}}
+The user has not asked a specific question. Please provide a general consultation based on their settings.
+
 Based on this information, provide a concise and actionable consultation. Structure your response in Markdown in the "advice" field.
 
 Also, analyze the suggestions and if you provide a SPECIFIC NUMERIC suggestion for infill or shell thickness, populate the corresponding output fields. For example, if you suggest "Giảm độ rỗng xuống 15%", you must set the 'suggestedInfill' field to 15. If you suggest reducing shell thickness to 1.8mm, you must set 'suggestedShellThickness' to 1.8. If no specific numeric suggestion is made, leave these fields empty.
@@ -53,6 +60,7 @@ Also, analyze the suggestions and if you provide a SPECIFIC NUMERIC suggestion f
 
 ### Lưu ý thêm
 - Add a concluding positive remark. Encourage the user to proceed with printing if they are happy with the estimate. For example: "Đây là một mô hình rất tiềm năng! Chúc bạn có một bản in thành công."
+{{/if}}
 
 Keep the entire response concise, professional, and easy for a non-expert to understand.
 `,

@@ -13,6 +13,7 @@ export const ConsultationInputSchema = z.object({
   shellThickness: z.number().optional().describe("The shell thickness for resin printing in mm."),
   estimatedWeight: z.number().describe("The estimated weight of the print in grams."),
   estimatedCost: z.number().describe("The estimated cost of the print in Vietnamese Dong (đ)."),
+  userPrompt: z.string().optional().describe("A specific question or prompt from the user for the AI to answer."),
 });
 export type ConsultationInput = z.infer<typeof ConsultationInputSchema>;
 

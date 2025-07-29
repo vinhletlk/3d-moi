@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle, Wand2, Send, ListOrdered } from "lucide-react";
+import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle, Wand2, Send, ListOrdered, MessageCircleQuestion } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { StlParser } from "@/lib/stl-parser";
 import { consultAI } from "@/ai/flows/consult-flow";
@@ -22,7 +22,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { processOrder } from "@/ai/flows/order-flow";
 import { Textarea } from "@/components/ui/textarea";
 import Link from 'next/link';
-import { Skeleton } from "@/components/ui/skeleton";
 
 
 const In3dLogo = () => (
@@ -69,6 +68,7 @@ export default function Home() {
   const [isConsulting, setIsConsulting] = useState<boolean>(false);
   const [consultationResult, setConsultationResult] = useState<ConsultationOutput | null>(null);
   const [consultationError, setConsultationError] = useState<string | null>(null);
+  const [userPrompt, setUserPrompt] = useState<string>("");
 
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
@@ -167,6 +167,7 @@ export default function Home() {
     setProgress(0);
     setConsultationResult(null);
     setConsultationError(null);
+    setUserPrompt("");
     form.reset();
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -221,6 +222,7 @@ export default function Home() {
       ...(technology === 'fdm'
         ? { infillPercentage: infillPercentage }
         : { shellThickness: shellThickness }),
+      ...(userPrompt && { userPrompt: userPrompt }),
     };
 
     try {
@@ -374,14 +376,6 @@ export default function Home() {
                                  <p className="text-xs text-muted-foreground">Tệp đã tải lên</p>
                              </div>
                          </div>
-                         <div className="flex items-center gap-2 flex-shrink-0">
-                            {!consultationResult && !isConsulting && !consultationError && (
-                              <Button onClick={handleConsultation}>
-                                <Sparkles className="mr-2 h-4 w-4" />
-                                Tư vấn
-                              </Button>
-                            )}
-                         </div>
                      </div>
                       <div className="space-y-4">
                         <h3 className="text-lg font-semibold text-foreground border-b pb-2">Thông số mô hình</h3>
@@ -410,11 +404,39 @@ export default function Home() {
                           </Card>
                         </div>
                       </div>
-                      {isConsulting && (
-                        <div className="flex flex-col items-center justify-center space-y-4 p-6 min-h-[150px] bg-card rounded-lg">
+
+                      <div className="space-y-4">
+                        <Label className="text-base font-medium flex items-center gap-2" htmlFor="user-prompt">
+                          <MessageCircleQuestion className="h-5 w-5" />
+                          Yêu cầu tư vấn cụ thể
+                        </Label>
+                        <Textarea
+                          id="user-prompt"
+                          placeholder="Ví dụ: Tôi muốn in mô hình này để làm mô hình trưng bày, chịu được va đập nhẹ. Nên dùng loại vật liệu nào cho tiết kiệm?"
+                          value={userPrompt}
+                          onChange={(e) => setUserPrompt(e.target.value)}
+                          className="bg-card"
+                        />
+                        <Button onClick={handleConsultation} disabled={isConsulting} className="w-full sm:w-auto">
+                            {isConsulting ? (
+                                <>
+                                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                                    AI đang phân tích...
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles className="mr-2 h-4 w-4" />
+                                    Tư vấn với AI
+                                </>
+                            )}
+                        </Button>
+                      </div>
+
+                      {isConsulting && !consultationResult && (
+                        <div className="flex flex-col items-center justify-center space-y-4 p-6 min-h-[150px] bg-card rounded-lg border">
                           <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
                           <p className="text-lg font-semibold">AI đang phân tích...</p>
-                          <p className="text-sm text-muted-foreground text-center">Trợ lý ảo đang chuẩn bị lời khuyên tối ưu cho bạn.</p>
+                          <p className="text-sm text-muted-foreground text-center">Trợ lý ảo đang chuẩn bị lời khuyên cho bạn.</p>
                         </div>
                       )}
 
