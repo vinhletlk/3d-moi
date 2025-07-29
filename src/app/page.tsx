@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, type ChangeEvent, useEffect, Suspense } from "react";
+import { useState, useRef, type ChangeEvent, useEffect } from "react";
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle, Wand2, Send, ListOrdered, Eye } from "lucide-react";
+import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Scale, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle, Wand2, Send, ListOrdered } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { StlParser } from "@/lib/stl-parser";
 import { consultAI } from "@/ai/flows/consult-flow";
@@ -22,8 +22,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { processOrder } from "@/ai/flows/order-flow";
 import { Textarea } from "@/components/ui/textarea";
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
-import { Skeleton } from "@/components/ui/skeleton";
 
 
 type PrintTechnology = "fdm" | "resin";
@@ -40,20 +38,11 @@ const COST_PER_GRAM_FDM = 1000;
 const COST_PER_GRAM_RESIN = 4000;
 const SUPPORT_COST_FACTOR = 1.15; // 15% increase for supports
 
-const StlViewer = dynamic(() => import('@/components/stl-viewer'), {
-  ssr: false,
-  loading: () => <div className="w-full h-full flex items-center justify-center"><Skeleton className="w-full h-full" /></div>
-});
-
 
 export default function Home() {
   const [results, setResults] = useState<CalculationOutput | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [fileName, setFileName] = useState<string>("");
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
-  const [technology, setTechnology] = useState<PrintTechnology>("fdm");
-  const [infillPercentage, setInfillPercentage] = useState<number>(20);
-  const [shellThickness, setShellThickness] = useState<number>(2);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [progress, setProgress] = useState(0);
@@ -107,7 +96,6 @@ export default function Home() {
     }
 
     setFileName(file.name);
-    setFileUrl(URL.createObjectURL(file));
     setIsLoading(true);
     setResults(null);
     setConsultationResult(null);
@@ -135,7 +123,6 @@ export default function Home() {
         });
         setFileName("");
         setIsLoading(false);
-        setFileUrl(null);
       }
     };
     reader.onerror = (error) => {
@@ -147,7 +134,6 @@ export default function Home() {
         });
         setIsLoading(false);
         setFileName("");
-        setFileUrl(null);
     };
   };
 
@@ -159,10 +145,6 @@ export default function Home() {
     setResults(null);
     setIsLoading(false);
     setFileName("");
-    if(fileUrl) {
-      URL.revokeObjectURL(fileUrl);
-      setFileUrl(null);
-    }
     setProgress(0);
     setConsultationResult(null);
     setConsultationError(null);
@@ -361,31 +343,6 @@ export default function Home() {
                          </Card>
                          
                          <div className="flex items-center gap-2 md:justify-self-end">
-                            {fileUrl && (
-                               <Dialog>
-                                   <DialogTrigger asChild>
-                                       <Button variant="outline">
-                                           <Eye className="mr-2 h-5 w-5" />
-                                           Xem trước
-                                       </Button>
-                                   </DialogTrigger>
-                                   <DialogContent className="max-w-3xl h-3/4 flex flex-col">
-                                       <DialogHeader>
-                                           <DialogTitle>Xem trước: {fileName}</DialogTitle>
-                                       </DialogHeader>
-                                       <div className="flex-grow bg-muted rounded-lg border">
-                                           <Suspense fallback={<div className="w-full h-full flex items-center justify-center"><Skeleton className="w-full h-full" /></div>}>
-                                                <StlViewer fileUrl={fileUrl} />
-                                           </Suspense>
-                                       </div>
-                                       <DialogFooter>
-                                            <DialogClose asChild>
-                                                <Button type="button">Đóng</Button>
-                                            </DialogClose>
-                                       </DialogFooter>
-                                   </DialogContent>
-                               </Dialog>
-                            )}
                             {!consultationResult && !isConsulting && !consultationError && (
                               <Button onClick={handleConsultation}>
                                 <Sparkles className="mr-2 h-5 w-5" />
