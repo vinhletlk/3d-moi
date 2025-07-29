@@ -11,14 +11,18 @@ import { OrderInputSchema, OrderOutputSchema, type OrderInput, type OrderOutput 
 export async function processOrder(input: OrderInput): Promise<OrderOutput> {
   const result = await processOrderFlow(input);
   
-  // In a real application, you would integrate with an email service
-  // and an SMS service here to send the generated messages.
-  console.log("------- EMAIL TO CUSTOMER -------");
+  // --- SIMULATION: In a real application, you would integrate with an email and SMS service here. ---
+  console.log("==================================================");
+  console.log(" MÔ PHỎNG GỬI THÔNG BÁO ĐƠN HÀNG");
+  console.log("==================================================");
+  console.log("\n----- Nội dung Email gửi tới khách hàng -----\n");
   console.log(result.confirmationEmail);
-  console.log("---------------------------------");
-  console.log("--------- SMS TO CUSTOMER ---------");
+  console.log("\n--------------------------------------------\n");
+  console.log("\n----- Nội dung SMS gửi tới khách hàng ------\n");
   console.log(result.confirmationSms);
-  console.log("---------------------------------");
+  console.log("\n--------------------------------------------\n");
+  console.log("Lưu ý: Email và SMS chưa được gửi đi thực tế. Đây là phần mô phỏng để bạn kiểm tra nội dung. Để gửi thật, bạn cần tích hợp một dịch vụ như SendGrid (email) hoặc Twilio (SMS) tại đây.");
+  console.log("==================================================");
   
   return result;
 }
