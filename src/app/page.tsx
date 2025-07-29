@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle, Wand2, Send, ListOrdered, MessageCircleQuestion } from "lucide-react";
+import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle, Wand2, Send, ListOrdered, MessageCircleQuestion, Tags } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { StlParser } from "@/lib/stl-parser";
 import { consultAI } from "@/ai/flows/consult-flow";
@@ -47,9 +47,6 @@ interface CalculationOutput {
 
 const DENSITY_FDM = 1.25; 
 const DENSITY_RESIN = 1.15;
-
-const COST_PER_GRAM_FDM = 1000;
-const COST_PER_GRAM_RESIN = 4000;
 const SUPPORT_COST_FACTOR = 1.15; // 15% increase for supports
 
 
@@ -64,6 +61,8 @@ export default function Home() {
   const [technology, setTechnology] = useState<PrintTechnology>("fdm");
   const [infillPercentage, setInfillPercentage] = useState<number>(20);
   const [shellThickness, setShellThickness] = useState<number>(2.0);
+  const [costPerGramFDM, setCostPerGramFDM] = useState<number>(1000);
+  const [costPerGramResin, setCostPerGramResin] = useState<number>(4000);
   
   const [isConsulting, setIsConsulting] = useState<boolean>(false);
   const [consultationResult, setConsultationResult] = useState<ConsultationOutput | null>(null);
@@ -183,11 +182,11 @@ export default function Home() {
 
     if (technology === 'fdm') {
       density = DENSITY_FDM;
-      costPerGram = COST_PER_GRAM_FDM;
+      costPerGram = costPerGramFDM;
       volume = results.volume * (infillPercentage / 100);
     } else { // Resin
       density = DENSITY_RESIN;
-      costPerGram = COST_PER_GRAM_RESIN;
+      costPerGram = costPerGramResin;
       const thicknessInCm = shellThickness / 10;
       const shellVolume = results.surfaceArea * thicknessInCm;
       volume = Math.min(shellVolume, results.volume);
@@ -518,6 +517,36 @@ export default function Home() {
                             </div>
                           </RadioGroup>
                         </div>
+
+                        <div className="space-y-4">
+                            <Label className="text-base font-medium flex items-center gap-2">
+                              <Tags className="h-5 w-5" />
+                              Chi phí vật liệu (đ/g)
+                            </Label>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label htmlFor="costFDM" className="text-sm font-normal text-muted-foreground">Nhựa FDM</Label>
+                                    <Input 
+                                        id="costFDM"
+                                        type="number"
+                                        value={costPerGramFDM}
+                                        onChange={(e) => setCostPerGramFDM(Number(e.target.value))}
+                                        className="bg-card"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="costResin" className="text-sm font-normal text-muted-foreground">Nhựa Resin</Label>
+                                    <Input 
+                                        id="costResin"
+                                        type="number"
+                                        value={costPerGramResin}
+                                        onChange={(e) => setCostPerGramResin(Number(e.target.value))}
+                                        className="bg-card"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
                         {technology === 'fdm' && (
                           <div className="space-y-3 pt-2">
                             <Label className="text-base font-medium flex items-center" htmlFor="infill">
@@ -698,3 +727,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
