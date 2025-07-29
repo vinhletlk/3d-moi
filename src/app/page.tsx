@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, type ChangeEvent, useEffect } from "react";
+import { useState, useRef, type ChangeEvent, useEffect, Suspense } from "react";
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -374,7 +374,9 @@ export default function Home() {
                                            <DialogTitle>Xem trước: {fileName}</DialogTitle>
                                        </DialogHeader>
                                        <div className="flex-grow bg-muted rounded-lg border">
-                                           <StlViewer fileUrl={fileUrl} />
+                                           <Suspense fallback={<div className="w-full h-full flex items-center justify-center"><Skeleton className="w-full h-full" /></div>}>
+                                                <StlViewer fileUrl={fileUrl} />
+                                           </Suspense>
                                        </div>
                                        <DialogFooter>
                                             <DialogClose asChild>
