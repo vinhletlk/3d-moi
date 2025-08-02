@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, type ChangeEvent, useEffect } from "react";
@@ -10,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle, Wand2, Send, ListOrdered, MessageCircleQuestion } from "lucide-react";
+import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle, Wand2, Send, ListOrdered, MessageCircleQuestion, ChevronsRight } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { StlParser } from "@/lib/stl-parser";
 import { consultAI } from "@/ai/flows/consult-flow";
@@ -24,20 +23,18 @@ import { processOrder } from "@/ai/flows/order-flow";
 import { Textarea } from "@/components/ui/textarea";
 import Link from 'next/link';
 
-
 const In3dLogo = () => (
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M11.9619 23.6301L14.632 27.2341C15.1161 27.8721 16.1242 27.8721 16.6083 27.2341L19.2783 23.6301" stroke="#3F51B5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M15.6201 19.3398V27.4268" stroke="#3F51B5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M19.2783 8.36987L16.6083 4.76587C16.1242 4.12787 15.1161 4.12787 14.632 4.76587L11.9619 8.36987" stroke="#3F51B5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M15.6201 4.57227V12.6593" stroke="#3F51B5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M8.36987 19.2783L4.76587 16.6083C4.12787 16.1242 4.12787 15.1161 4.76587 14.632L8.36987 11.9619" stroke="#3F51B5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M4.57227 15.6201H12.6593" stroke="#3F51B5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M23.6301 11.9619L27.2341 14.632C27.8721 15.1161 27.8721 16.1242 27.2341 16.6083L23.6301 19.2783" stroke="#3F51B5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M27.4268 15.6201H19.3398" stroke="#3F51B5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M11.9619 23.6301L14.632 27.2341C15.1161 27.8721 16.1242 27.8721 16.6083 27.2341L19.2783 23.6301" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M15.6201 19.3398V27.4268" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M19.2783 8.36987L16.6083 4.76587C16.1242 4.12787 15.1161 4.12787 14.632 4.76587L11.9619 8.36987" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M15.6201 4.57227V12.6593" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M8.36987 19.2783L4.76587 16.6083C4.12787 16.1242 4.12787 15.1161 4.76587 14.632L8.36987 11.9619" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M4.57227 15.6201H12.6593" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M23.6301 11.9619L27.2341 14.632C27.8721 15.1161 27.8721 16.1242 27.2341 16.6083L23.6301 19.2783" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M27.4268 15.6201H19.3398" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
 );
-
 
 type PrintTechnology = "fdm" | "resin";
 
@@ -51,7 +48,6 @@ const DENSITY_RESIN = 1.15;
 const SUPPORT_COST_FACTOR = 1.15; // 15% increase for supports
 const COST_PER_GRAM_FDM = 1000;
 const COST_PER_GRAM_RESIN = 4000;
-
 
 export default function Home() {
   const [results, setResults] = useState<CalculationOutput | null>(null);
@@ -173,7 +169,7 @@ export default function Home() {
   };
   
   const calculateCost = () => {
-    if (!results) return { weight: 0, totalCost: 0, costPerGram: 0 };
+    if (!results) return { weight: 0, totalCost: 0, costPerGram: 0, baseCost: 0, supportCost: 0 };
     
     let volume = 0;
     let density = 0;
@@ -192,16 +188,17 @@ export default function Home() {
     }
 
     let weight = volume * density;
-    let totalCost = weight * costPerGram;
+    let baseCost = weight * costPerGram;
+    let supportCost = baseCost * (SUPPORT_COST_FACTOR - 1);
+    let totalCost = baseCost + supportCost;
+    
+    // To calculate the final weight including supports for display
+    let finalWeight = weight * SUPPORT_COST_FACTOR;
 
-    // Always add support cost
-    weight *= SUPPORT_COST_FACTOR;
-    totalCost *= SUPPORT_COST_FACTOR;
-
-    return { weight, totalCost, costPerGram };
+    return { weight: finalWeight, totalCost, costPerGram, baseCost, supportCost };
   };
 
-  const { weight, totalCost, costPerGram } = calculateCost();
+  const { weight, totalCost, costPerGram, baseCost, supportCost } = calculateCost();
 
   const handleConsultation = async () => {
     if (!results) return;
@@ -290,43 +287,43 @@ export default function Home() {
     }
   };
 
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('vi-VN', { maximumFractionDigits: 0, minimumFractionDigits: 0 }) + ' đ';
+  }
 
   return (
-    <div className="min-h-screen w-full bg-background font-sans text-foreground">
-      <header className="bg-card/80 backdrop-blur-sm sticky top-0 z-40 border-b">
+    <div className="min-h-screen w-full bg-gray-50 font-sans text-gray-800 dark:bg-gray-900 dark:text-gray-200">
+      <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-40 border-b dark:border-gray-800">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                     <In3dLogo />
-                    <h1 className="text-xl sm:text-2xl font-bold text-foreground">in3D</h1>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-white">in3D</h1>
                 </div>
                  <div className="flex items-center space-x-2">
-                    <Button variant="ghost" asChild>
+                    <Button variant="ghost" asChild className="dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white">
                         <Link href="/orders">
                             <ListOrdered className="mr-2 h-4 w-4"/>
                             Quản lý Đơn hàng
                         </Link>
                     </Button>
-                    <Button variant="ghost">Đăng nhập</Button>
+                    <Button variant="outline" className="dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white">Đăng nhập</Button>
                 </div>
             </div>
         </div>
       </header>
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-        <div className="max-w-5xl mx-auto">
-          <Card className="w-full shadow-lg rounded-xl overflow-hidden border-border bg-card/50">
-            <CardHeader className="text-center p-6 sm:p-8">
-              <CardTitle className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
-                Ước tính chi phí in 3D
-              </CardTitle>
-              <CardDescription className="text-md sm:text-lg text-muted-foreground mt-2 max-w-2xl mx-auto">
-                Tải lên tệp .STL để nhận ngay báo giá tức thì cho cả in FDM và Resin. Chi phí đã bao gồm support.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6 space-y-6">
-              {!fileName && !isLoading && (
+
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        {!results && !isLoading && (
+            <div className="max-w-3xl mx-auto text-center">
+                <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+                    Ước tính chi phí in 3D
+                </h2>
+                <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
+                    Tải lên tệp .STL để nhận ngay báo giá tức thì cho cả in FDM và Resin. Nhanh chóng, chính xác và minh bạch.
+                </p>
                 <div 
-                    className="flex flex-col items-center justify-center p-6 sm:p-10 border-2 border-dashed border-border rounded-lg text-center transition-colors hover:border-primary/50 hover:bg-primary/5"
+                    className="mt-8 flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center transition-colors hover:border-indigo-500/50 hover:bg-indigo-50/50 dark:hover:border-indigo-400/50 dark:hover:bg-gray-800/20"
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
                         e.preventDefault();
@@ -343,333 +340,283 @@ export default function Home() {
                     className="hidden"
                     accept=".stl"
                   />
-                  <div className="mb-4 text-primary">
-                    <Upload className="h-10 w-10 sm:h-12 sm:w-12" />
+                  <div className="mb-4 text-indigo-600 dark:text-indigo-400">
+                    <Upload className="h-12 w-12" />
                   </div>
-                  <Button onClick={handleUploadClick} size="lg" className="font-bold text-base">
+                  <Button onClick={handleUploadClick} size="lg" className="font-bold text-base bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 dark:text-white">
                     Chọn tệp STL
                   </Button>
-                  <p className="text-sm text-muted-foreground mt-3">hoặc kéo và thả tệp vào đây</p>
-                  <p className="text-xs text-muted-foreground mt-4">Hỗ trợ STL nhị phân & ASCII. Tối đa 50MB.</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">hoặc kéo và thả tệp vào đây</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">Hỗ trợ STL nhị phân & ASCII. Tối đa 50MB.</p>
                 </div>
-              )}
+            </div>
+        )}
 
-              {isLoading && (
-                <div className="flex flex-col items-center justify-center space-y-4 p-6 min-h-[200px]">
-                  <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
-                  <p className="text-lg sm:text-xl font-semibold">Đang xử lý <span className="font-bold text-primary">{fileName}</span></p>
-                  <Progress value={progress} className="w-full max-w-sm" />
-                  <p className="text-sm text-muted-foreground">Quá trình này có thể mất một chút thời gian...</p>
-                </div>
-              )}
-              
-              {results && !isLoading && (
-                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-start">
-                   <div className="space-y-6">
-                     <div className="p-4 bg-card rounded-lg border flex items-center justify-between gap-4">
-                         <div className="flex items-center gap-4 overflow-hidden">
-                             <Box className="w-10 h-10 text-primary/80 flex-shrink-0" />
-                             <div className="flex-grow overflow-hidden">
-                                 <p className="text-sm font-semibold text-foreground truncate" title={fileName}>{fileName}</p>
-                                 <p className="text-xs text-muted-foreground">Tệp đã tải lên</p>
-                             </div>
-                         </div>
+        {isLoading && (
+            <div className="flex flex-col items-center justify-center space-y-4 p-6 min-h-[300px]">
+              <LoaderCircle className="h-10 w-10 animate-spin text-indigo-600" />
+              <p className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200">Đang xử lý <span className="font-bold text-indigo-600 dark:text-indigo-400">{fileName}</span></p>
+              <Progress value={progress} className="w-full max-w-sm" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">Quá trình này có thể mất một chút thời gian...</p>
+            </div>
+        )}
+        
+        {results && !isLoading && (
+            <div className="max-w-7xl mx-auto">
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-4 overflow-hidden bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-3 shadow-sm">
+                     <Box className="w-8 h-8 text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
+                     <div className="flex-grow overflow-hidden">
+                         <p className="text-base font-semibold text-gray-800 dark:text-gray-200 truncate" title={fileName}>{fileName}</p>
+                         <p className="text-sm text-gray-500 dark:text-gray-400">Đã sẵn sàng để cấu hình và báo giá</p>
                      </div>
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-foreground border-b pb-2">Thông số mô hình</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                          <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                              <CardTitle className="text-sm font-medium">Thể tích</CardTitle>
-                              <Ruler className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                              <div className="text-xl sm:text-2xl font-bold">
-                                {results.volume.toFixed(2)} <span className="text-sm sm:text-base font-normal text-muted-foreground">cm³</span>
-                              </div>
-                            </CardContent>
-                          </Card>
-                          <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                              <CardTitle className="text-sm font-medium">Bề mặt</CardTitle>
-                              <Shell className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                              <div className="text-xl sm:text-2xl font-bold">
-                                {results.surfaceArea.toFixed(2)} <span className="text-sm sm:text-base font-normal text-muted-foreground">cm²</span>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </div>
+                </div>
+                <Button onClick={handleReset} variant="outline" className="font-semibold dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white">
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Tải tệp khác
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+                
+                {/* Left Column */}
+                <div className="lg:col-span-3 space-y-8">
+                  <Card className="shadow-md border-gray-200/80 dark:bg-gray-800/50 dark:border-gray-700/50">
+                    <CardHeader>
+                      <CardTitle className="text-xl">Tùy chọn in</CardTitle>
+                      <CardDescription>Chọn công nghệ và tinh chỉnh các thông số để phù hợp với nhu cầu của bạn.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="space-y-3">
+                        <Label className="text-base font-medium">Công nghệ in</Label>
+                        <RadioGroup
+                          value={technology}
+                          onValueChange={(value) => {
+                              setTechnology(value as PrintTechnology);
+                              setConsultationResult(null);
+                              setConsultationError(null);
+                          }}
+                          className="grid grid-cols-2 gap-4"
+                        >
+                          <div>
+                            <RadioGroupItem value="fdm" id="fdm" className="peer sr-only" />
+                            <Label htmlFor="fdm" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-indigo-600 [&:has([data-state=checked])]:border-indigo-600 cursor-pointer dark:peer-data-[state=checked]:border-indigo-500">
+                              <Atom className="mb-2 h-6 w-6" /> FDM
+                            </Label>
+                          </div>
+                          <div>
+                            <RadioGroupItem value="resin" id="resin" className="peer sr-only" />
+                            <Label htmlFor="resin" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-indigo-600 [&:has([data-state=checked])]:border-indigo-600 cursor-pointer dark:peer-data-[state=checked]:border-indigo-500">
+                              <Droplets className="mb-2 h-6 w-6" /> Resin
+                            </Label>
+                          </div>
+                        </RadioGroup>
                       </div>
 
-                      <div className="space-y-4">
-                        <Label className="text-base font-medium flex items-center gap-2" htmlFor="user-prompt">
+                      {technology === 'fdm' && (
+                        <div className="space-y-3 pt-2">
+                          <Label className="text-base font-medium flex items-center" htmlFor="infill">
+                            <Percent className="mr-2 h-4 w-4" /> Độ rỗng (Infill)
+                          </Label>
+                          <div className="flex items-center space-x-4">
+                            <Slider id="infill" value={[infillPercentage]} onValueChange={(value) => { setInfillPercentage(value[0]); setConsultationResult(null); setConsultationError(null); }} max={100} step={5} className="flex-1" />
+                            <span className="text-lg font-bold w-16 text-right text-indigo-600 dark:text-indigo-400">{infillPercentage}%</span>
+                          </div>
+                        </div>
+                      )}
+                      {technology === 'resin' && (
+                        <div className="space-y-3 pt-2">
+                           <Label className="text-base font-medium flex items-center" htmlFor="shell">
+                             <Contrast className="mr-2 h-4 w-4" /> Độ dày vỏ (Shell)
+                          </Label>
+                          <div className="flex items-center space-x-4">
+                            <Slider id="shell" value={[shellThickness]} onValueChange={(value) => { setShellThickness(value[0]); setConsultationResult(null); setConsultationError(null); }} max={10} step={0.1} className="flex-1" />
+                            <span className="text-lg font-bold w-16 text-right text-indigo-600 dark:text-indigo-400">{shellThickness.toFixed(1)} mm</span>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card className="shadow-md border-gray-200/80 dark:bg-gray-800/50 dark:border-gray-700/50">
+                    <CardHeader>
+                        <CardTitle className="text-xl flex items-center gap-2">
+                           <Sparkles className="text-indigo-500" /> Tư vấn với Trợ lý AI
+                        </CardTitle>
+                        <CardDescription>Không chắc chắn về lựa chọn? Hãy hỏi trợ lý AI để có được lời khuyên tối ưu.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                       <Label className="font-medium flex items-center gap-2" htmlFor="user-prompt">
                           <MessageCircleQuestion className="h-5 w-5" />
-                          Yêu cầu tư vấn cụ thể
+                          Yêu cầu tư vấn cụ thể (tùy chọn)
                         </Label>
                         <Textarea
                           id="user-prompt"
                           placeholder="Ví dụ: Tôi muốn in mô hình này để làm mô hình trưng bày, chịu được va đập nhẹ. Nên dùng loại vật liệu nào cho tiết kiệm?"
                           value={userPrompt}
                           onChange={(e) => setUserPrompt(e.target.value)}
-                          className="bg-card"
+                          className="bg-white dark:bg-gray-800"
                         />
-                        <Button onClick={handleConsultation} disabled={isConsulting} className="w-full sm:w-auto">
+                        <Button onClick={handleConsultation} disabled={isConsulting}>
                             {isConsulting ? (
-                                <>
-                                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                                    AI đang phân tích...
-                                </>
+                                <><LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> AI đang phân tích...</>
                             ) : (
-                                <>
-                                    <Sparkles className="mr-2 h-4 w-4" />
-                                    Tư vấn với AI
-                                </>
+                                <>Gửi yêu cầu tư vấn</>
                             )}
                         </Button>
-                      </div>
 
-                      {isConsulting && !consultationResult && (
-                        <div className="flex flex-col items-center justify-center space-y-4 p-6 min-h-[150px] bg-card rounded-lg border">
-                          <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
-                          <p className="text-lg font-semibold">AI đang phân tích...</p>
-                          <p className="text-sm text-muted-foreground text-center">Trợ lý ảo đang chuẩn bị lời khuyên cho bạn.</p>
-                        </div>
-                      )}
-
-                      {consultationError && (
-                        <Card className="bg-destructive/10 border-destructive/50 text-destructive-foreground">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <AlertTriangle />
-                                    Lỗi Tư Vấn
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p>{consultationError}</p>
-                                <Button onClick={handleConsultation} variant="destructive" className="mt-4">
-                                    Thử lại
-                                </Button>
-                            </CardContent>
-                        </Card>
-                      )}
-
-                      {consultationResult && !isConsulting && (
-                         <Card className="bg-primary/5">
-                            <CardHeader>
-                                <CardTitle className="flex items-center text-xl font-bold text-primary">
-                                  <Sparkles className="mr-2 h-6 w-6" />
-                                  Tư vấn từ Trợ lý AI
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="prose prose-sm sm:prose-base max-w-none text-foreground prose-h3:text-primary prose-strong:text-foreground">
-                                  <ReactMarkdown>{consultationResult.advice}</ReactMarkdown>
-                                </div>
-                                {canApplySuggestion && (
-                                   <Button onClick={applyAISuggestion}>
-                                        <Wand2 className="mr-2 h-4 w-4" />
-                                        Áp dụng đề xuất của AI
-                                   </Button>
-                                )}
-                            </CardContent>
-                         </Card>
-                      )}
-
-                   </div>
-                  <div className="space-y-6">
-                    <div className="space-y-6">
-                      
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-foreground border-b pb-2">Tùy chọn in</h3>
-                         <div className="space-y-3">
-                          <Label className="text-base font-medium">Công nghệ in</Label>
-                          <RadioGroup
-                            value={technology}
-                            onValueChange={(value) => {
-                                setTechnology(value as PrintTechnology);
-                                setConsultationResult(null);
-                                setConsultationError(null);
-                            }}
-                            className="grid grid-cols-2 gap-4"
-                          >
+                        {isConsulting && !consultationResult && (
+                          <div className="flex items-center gap-4 p-4 min-h-[100px] bg-gray-50 dark:bg-gray-900 rounded-lg border dark:border-gray-700">
+                            <LoaderCircle className="h-8 w-8 animate-spin text-indigo-600" />
                             <div>
-                              <RadioGroupItem value="fdm" id="fdm" className="peer sr-only" />
-                              <Label
-                                htmlFor="fdm"
-                                className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent/10 hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-                              >
-                                <Atom className="mb-2 h-6 w-6" />
-                                FDM
-                              </Label>
-                            </div>
-                            <div>
-                              <RadioGroupItem value="resin" id="resin" className="peer sr-only" />
-                              <Label
-                                htmlFor="resin"
-                                className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent/10 hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-                              >
-                                <Droplets className="mb-2 h-6 w-6" />
-                                Resin
-                              </Label>
-                            </div>
-                          </RadioGroup>
-                        </div>
-
-                        {technology === 'fdm' && (
-                          <div className="space-y-3 pt-2">
-                            <Label className="text-base font-medium flex items-center" htmlFor="infill">
-                              <Percent className="mr-2 h-4 w-4" />
-                              Độ rỗng (Infill)
-                            </Label>
-                            <div className="flex items-center space-x-4">
-                              <Slider
-                                id="infill"
-                                value={[infillPercentage]}
-                                onValueChange={(value) => {
-                                    setInfillPercentage(value[0]);
-                                    setConsultationResult(null);
-                                    setConsultationError(null);
-                                }}
-                                max={100}
-                                step={5}
-                                className="flex-1"
-                              />
-                              <span className="text-lg font-bold w-16 text-right text-primary">{infillPercentage}%</span>
+                              <p className="font-semibold text-gray-800 dark:text-gray-200">AI đang phân tích...</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">Trợ lý ảo đang chuẩn bị lời khuyên cho bạn.</p>
                             </div>
                           </div>
                         )}
-                        {technology === 'resin' && (
-                          <div className="space-y-3 pt-2">
-                             <Label className="text-base font-medium flex items-center" htmlFor="shell">
-                               <Contrast className="mr-2 h-4 w-4" />
-                               Độ dày vỏ (Shell)
-                            </Label>
-                            <div className="flex items-center space-x-4">
-                              <Slider
-                                id="shell"
-                                value={[shellThickness]}
-                                onValueChange={(value) => {
-                                    setShellThickness(value[0]);
-                                    setConsultationResult(null);
-                                    setConsultationError(null);
-                                }}
-                                max={10}
-                                step={0.1}
-                                className="flex-1"
-                              />
-                              <span className="text-lg font-bold w-16 text-right text-primary">{shellThickness.toFixed(1)} mm</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
 
-                    <div className="space-y-4">
-                       <h3 className="text-lg font-semibold text-foreground border-b pb-2">Báo giá ước tính</h3>
-                       <Card>
-                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Cân nặng ước tính</CardTitle>
-                            <Weight className="h-4 w-4 text-muted-foreground" />
-                          </CardHeader>
-                          <CardContent>
-                            <div className="text-xl sm:text-2xl font-bold">
-                              {weight.toFixed(2)} <span className="text-sm sm:text-base font-normal text-muted-foreground">g</span>
-                            </div>
-                            <p className="text-xs text-muted-foreground pt-1">(Đã bao gồm support)</p>
-                          </CardContent>
-                        </Card>
-                       <div className="bg-gradient-to-br from-accent/90 to-accent rounded-lg p-6 text-center text-accent-foreground shadow-xl">
-                        <Label className="text-md sm:text-lg font-semibold opacity-90">Tổng chi phí</Label>
-                        <div className="text-4xl sm:text-5xl font-extrabold tracking-tight mt-1">
-                          {totalCost.toLocaleString('vi-VN', { maximumFractionDigits: 0, minimumFractionDigits: 0 })} đ
-                        </div>
-                         <p className="text-sm opacity-80 mt-2">
-                          (@ {costPerGram.toLocaleString('vi-VN')} đ/g)
-                        </p>
-                        <p className="text-xs opacity-80 pt-2">(Đã bao gồm 15% chi phí support)</p>
-                      </div>
-                    </div>
-                  </div>
+                        {consultationError && (
+                          <Card className="bg-destructive/10 border-destructive/50 text-destructive-foreground">
+                              <CardHeader className="pb-2">
+                                  <CardTitle className="text-base flex items-center gap-2"><AlertTriangle /> Lỗi Tư Vấn</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                  <p className="text-sm">{consultationError}</p>
+                                  <Button onClick={handleConsultation} variant="destructive" size="sm" className="mt-3">Thử lại</Button>
+                              </CardContent>
+                          </Card>
+                        )}
+
+                        {consultationResult && !isConsulting && (
+                           <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                              <h4 className="font-bold text-indigo-800 dark:text-indigo-300 flex items-center gap-2">
+                                <Sparkles className="h-5 w-5" /> Lời khuyên từ AI
+                              </h4>
+                              <div className="prose prose-sm sm:prose-base max-w-none text-gray-700 dark:text-gray-300 mt-2 prose-h3:text-primary prose-strong:text-gray-800 dark:prose-strong:text-gray-200">
+                                <ReactMarkdown>{consultationResult.advice}</ReactMarkdown>
+                              </div>
+                              {canApplySuggestion && (
+                                 <Button onClick={applyAISuggestion} size="sm" className="mt-4">
+                                      <Wand2 className="mr-2 h-4 w-4" /> Áp dụng đề xuất
+                                 </Button>
+                              )}
+                           </div>
+                        )}
+                    </CardContent>
+                  </Card>
                 </div>
-              )}
-            </CardContent>
-            { (fileName || results) && !isLoading && (
-              <CardFooter className="p-4 sm:p-6 bg-card/80 border-t grid grid-cols-1 sm:grid-cols-2 gap-4">
-                 <Button onClick={handleReset} variant="outline" className="w-full font-semibold">
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Tính toán lại
-                </Button>
-                 <Dialog open={isOrderDialogOpen} onOpenChange={setIsOrderDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="w-full font-semibold" size="lg">
-                            <Send className="mr-2 h-4 w-4" />
-                            Tiến hành Đặt hàng
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[480px]">
-                        <DialogHeader>
-                            <DialogTitle>Thông tin đặt hàng</DialogTitle>
-                            <DialogDescription>
-                                Vui lòng điền đầy đủ thông tin để chúng tôi có thể giao hàng cho bạn.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <Form {...form}>
-                            <form onSubmit={form.handleSubmit(handleOrderSubmit)} className="space-y-4">
-                                <FormField
-                                    control={form.control}
-                                    name="customerName"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Họ và Tên</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Nguyễn Văn A" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                 <FormField
-                                    control={form.control}
-                                    name="customerAddress"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Địa chỉ giao hàng</FormLabel>
-                                            <FormControl>
-                                                <Textarea placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <DialogFooter>
-                                    <DialogClose asChild>
-                                        <Button type="button" variant="outline">
-                                            Hủy
-                                        </Button>
-                                    </DialogClose>
-                                    <Button type="submit" disabled={isSubmittingOrder}>
-                                        {isSubmittingOrder && <LoaderCircle className="animate-spin mr-2" />}
-                                        Xác nhận Đặt hàng
-                                    </Button>
-                                </DialogFooter>
-                            </form>
-                        </Form>
-                    </DialogContent>
-                </Dialog>
-              </CardFooter>
-            )}
-          </Card>
-        </div>
+
+                {/* Right Column */}
+                <div className="lg:col-span-2 lg:sticky top-24 space-y-6">
+                   <Card className="shadow-md border-gray-200/80 dark:bg-gray-800/50 dark:border-gray-700/50">
+                    <CardHeader>
+                      <CardTitle className="text-xl">Thông số mô hình</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-2 gap-4">
+                        <div className="bg-gray-100/50 dark:bg-gray-900/50 p-3 rounded-lg">
+                          <Label className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1"><Ruler className="h-4 w-4"/>Thể tích</Label>
+                          <div className="text-xl font-bold text-gray-800 dark:text-gray-200 mt-1">
+                            {results.volume.toFixed(2)} <span className="text-sm font-normal text-gray-500 dark:text-gray-400">cm³</span>
+                          </div>
+                        </div>
+                        <div className="bg-gray-100/50 dark:bg-gray-900/50 p-3 rounded-lg">
+                          <Label className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1"><Shell className="h-4 w-4"/>Bề mặt</Label>
+                          <div className="text-xl font-bold text-gray-800 dark:text-gray-200 mt-1">
+                            {results.surfaceArea.toFixed(2)} <span className="text-sm font-normal text-gray-500 dark:text-gray-400">cm²</span>
+                          </div>
+                        </div>
+                    </CardContent>
+                   </Card>
+
+                   <Card className="shadow-lg border-indigo-200 dark:border-indigo-900 bg-white dark:bg-gray-800">
+                      <CardHeader>
+                         <CardTitle className="text-xl">Báo giá ước tính</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex justify-between items-center text-gray-600 dark:text-gray-400">
+                            <span>Cân nặng ước tính</span>
+                            <span className="font-medium text-gray-800 dark:text-gray-200">{weight.toFixed(2)} g</span>
+                        </div>
+                         <div className="flex justify-between items-center text-gray-600 dark:text-gray-400">
+                            <span>Đơn giá vật liệu</span>
+                            <span className="font-medium text-gray-800 dark:text-gray-200">{costPerGram.toLocaleString('vi-VN')} đ/g</span>
+                        </div>
+                         <div className="flex justify-between items-center text-gray-600 dark:text-gray-400">
+                            <span>Chi phí vật liệu gốc</span>
+                            <span className="font-medium text-gray-800 dark:text-gray-200">{formatCurrency(baseCost)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-gray-600 dark:text-gray-400">
+                            <span>Phí support (+15%)</span>
+                            <span className="font-medium text-gray-800 dark:text-gray-200">{formatCurrency(supportCost)}</span>
+                        </div>
+                        <div className="border-t border-dashed my-3 dark:border-gray-700"></div>
+                        <div className="flex justify-between items-center text-gray-900 dark:text-white pt-2">
+                            <span className="text-lg font-bold">Tổng chi phí</span>
+                            <span className="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">{formatCurrency(totalCost)}</span>
+                        </div>
+                      </CardContent>
+                      <CardFooter className="flex-col items-stretch gap-3">
+                        <Dialog open={isOrderDialogOpen} onOpenChange={setIsOrderDialogOpen}>
+                          <DialogTrigger asChild>
+                              <Button className="w-full font-semibold bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 dark:text-white" size="lg">
+                                  <Send className="mr-2 h-4 w-4" />
+                                  Tiến hành Đặt hàng
+                              </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[480px] dark:bg-gray-800 dark:text-gray-200">
+                              <DialogHeader>
+                                  <DialogTitle className="dark:text-white">Thông tin đặt hàng</DialogTitle>
+                                  <DialogDescription>
+                                      Vui lòng điền đầy đủ thông tin để chúng tôi có thể giao hàng cho bạn.
+                                  </DialogDescription>
+                              </DialogHeader>
+                              <Form {...form}>
+                                  <form onSubmit={form.handleSubmit(handleOrderSubmit)} className="space-y-4">
+                                      <FormField control={form.control} name="customerName" render={({ field }) => (
+                                          <FormItem>
+                                              <FormLabel className="dark:text-gray-300">Họ và Tên</FormLabel>
+                                              <FormControl>
+                                                  <Input placeholder="Nguyễn Văn A" {...field} className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
+                                              </FormControl>
+                                              <FormMessage />
+                                          </FormItem>
+                                      )} />
+                                       <FormField control={form.control} name="customerAddress" render={({ field }) => (
+                                          <FormItem>
+                                              <FormLabel className="dark:text-gray-300">Địa chỉ giao hàng</FormLabel>
+                                              <FormControl>
+                                                  <Textarea placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố" {...field} className="dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                                              </FormControl>
+                                              <FormMessage />
+                                          </FormItem>
+                                      )} />
+                                      <DialogFooter>
+                                          <DialogClose asChild>
+                                              <Button type="button" variant="outline" className="dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">Hủy</Button>
+                                          </DialogClose>
+                                          <Button type="submit" disabled={isSubmittingOrder} className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 dark:text-white">
+                                              {isSubmittingOrder && <LoaderCircle className="animate-spin mr-2" />}
+                                              Xác nhận Đặt hàng
+                                          </Button>
+                                      </DialogFooter>
+                                  </form>
+                              </Form>
+                          </DialogContent>
+                        </Dialog>
+                      </CardFooter>
+                   </Card>
+                </div>
+
+              </div>
+            </div>
+        )}
       </main>
-      <footer className="bg-card/80 border-t mt-auto">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-sm text-muted-foreground">
+
+      <footer className="bg-white/80 dark:bg-gray-900/80 border-t mt-auto dark:border-gray-800">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
               © {new Date().getFullYear()} in3D. All rights reserved.
           </div>
       </footer>
     </div>
   );
 }
-
-    
