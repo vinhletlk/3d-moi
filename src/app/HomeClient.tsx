@@ -65,7 +65,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { processOrder } from "@/ai/flows/order-flow";
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
-import { STLViewer } from "@/components/ui/STLViewer";
+import dynamic from "next/dynamic";
+
+// Dynamically import STLViewer on client-side only to avoid SSR issues with React-Three-Fiber
+const STLViewer = dynamic(() => import("@/components/ui/STLViewer").then(m => m.STLViewer), { ssr: false });
 
 const In3dLogo = () => (
   <svg
