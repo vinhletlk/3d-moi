@@ -2,6 +2,9 @@
   "name": "nextn",
   "version": "0.1.0",
   "private": true,
+  "overrides": {
+    "react": "18.2.0"
+  },
   "engines": {
     "node": "20.x"
   },
