@@ -69,6 +69,7 @@ import dynamic from "next/dynamic";
 
 // Dynamically import STLViewer on client-side only to avoid SSR issues with React-Three-Fiber
 const STLViewer = dynamic(() => import("@/components/ui/STLViewer").then(m => m.STLViewer), { ssr: false });
+const OrderDialog = dynamic(() => import('@/components/ui/OrderDialog').then(m => m.OrderDialog), { ssr: false });
 
 const In3dLogo = () => (
   <svg
@@ -387,8 +388,6 @@ export default function HomeClient() {
               {/* options + quote */}
               <div className="lg:col-span-1 space-y-8">
                 {/* options card */}
-const OrderDialog = dynamic(() => import('@/components/ui/OrderDialog').then(m => m.OrderDialog), { ssr: false });
-
                 {/* options card */}
                 <OrderDialog results={results} estimatedPrice={estimatedPrice} />
 
