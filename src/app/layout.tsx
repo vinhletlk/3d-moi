@@ -1,9 +1,9 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import { Inter } from 'next/font/google';
+// Removed Google font to avoid build-time download issues
+// Using system sans-serif stack instead
 
-const inter = Inter({ subsets: ['latin', 'vietnamese'] });
 
 export const metadata: Metadata = {
   title: 'in3D - Máy tính chi phí in 3D',
@@ -17,7 +17,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi">
-      <body className={`${inter.className} antialiased`}>
+      <body className={`antialiased`}>
         {children}
         <Toaster />
       </body>
