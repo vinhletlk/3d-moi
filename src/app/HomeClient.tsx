@@ -195,7 +195,23 @@ export default function HomeClient() {
     reader.onload = () => {
       const buf = reader.result as ArrayBuffer;
       setFileContent(buf);
-      setIsLoading(false);
+
+      // Calculate volume & surface area using parser
+      try {
+        const parser = new StlParser();
+        const { volume, surfaceArea } = parser.parse(Buffer.from(buf));
+        const materialDensity = technology === "fdm" ? DENSITY_FDM : DENSITY_RESIN;
+        const materialCostPerGram = technology === "fdm" ? COST_PER_GRAM_FDM : COST_PER_GRAM_RESIN;
+        // simple formula: weight = volume * density; cost = weight * cost/gram * support factor
+        const weightGrams = volume * materialDensity * (1 + SUPPORT_COST_FACTOR * (infillPercentage / 100));
+        const cost = weightGrams * materialCostPerGram;
+        setResults({ volume, surfaceArea, cost });
+      } catch (err) {
+        console.error(err);
+        toast({ title: "Không thể phân tích STL", description: "Vui lòng chọn tệp STL hợp lệ." , variant:"destructive"});
+      } finally {
+        setIsLoading(false);
+      }
     };
     reader.readAsArrayBuffer(file);
   };
@@ -215,7 +231,26 @@ export default function HomeClient() {
     },
   });
 
-  // useEffects, handlers, helpers, JSX copied from original...
+  // --- useEffects to recalculate cost ---
+  useEffect(() => {
+    if (fileContent && results) {
+      try {
+        const materialDensity = technology === "fdm" ? DENSITY_FDM : DENSITY_RESIN;
+        const materialCostPerGram = technology === "fdm" ? COST_PER_GRAM_FDM : COST_PER_GRAM_RESIN;
+
+        const weightGrams = results.volume * materialDensity * (1 + SUPPORT_COST_FACTOR * (infillPercentage / 100));
+        const cost = weightGrams * materialCostPerGram;
+
+        setResults(prev => prev ? ({ ...prev, cost }) : null);
+      } catch (err) {
+        console.error("Failed to recalculate cost:", err);
+      }
+    }
+  }, [technology, infillPercentage, fileContent, results?.volume]);
+
+  const estimatedPrice = results?.cost 
+    ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(results.cost)
+    : "N/A";
 
   return (
     <div className="relative min-h-screen w-full font-sans text-gray-800 dark:text-gray-200">
@@ -352,7 +387,39 @@ export default function HomeClient() {
               {/* options + quote */}
               <div className="lg:col-span-1 space-y-8">
                 {/* options card */}
-                {/* (phần card tuỳ chọn in và báo giá ~ copy nguyên xi từ code gốc) */}
+                <CardTitle className="text-2xl font-bold">Báo giá ước tính</CardTitle>
+                  <CardDescription>
+                    Chi phí cuối cùng có thể thay đổi sau khi xem xét thủ công.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between items-center text-lg">
+                    <span className="font-medium text-gray-600 dark:text-gray-300">Thể tích vật thể:</span>
+                    <span className="font-mono text-gray-900 dark:text-white">{results.volume.toFixed(2)} cm³</span>
+                  </div>
+                  <div className="flex justify-between items-center text-lg">
+                    <span className="font-medium text-gray-600 dark:text-gray-300">Diện tích bề mặt:</span>
+                    <span className="font-mono text-gray-900 dark:text-white">{results.surfaceArea.toFixed(2)} cm²</span>
+                  </div>
+                  <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
+                  <div className="flex justify-between items-center text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600">
+                    <span>Tổng cộng:</span>
+                    <span>{estimatedPrice}</span>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex-col gap-4">
+                   <DialogTrigger asChild>
+                     <Button size="lg" className="w-full font-bold text-lg">
+                       <Send className="mr-2 h-5 w-5" />
+                       Đặt hàng ngay
+                     </Button>
+                   </DialogTrigger>
+                </CardFooter>
+              </Card>
+
+              {/* AI Consultation */}
+              {/* (Giữ nguyên phần tư vấn AI) */}
+            </div>
               </div>
             </div>
           </div>
