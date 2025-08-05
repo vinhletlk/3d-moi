@@ -422,8 +422,6 @@ export default function HomeClient() {
               {/* AI Consultation */}
               {/* (Giữ nguyên phần tư vấn AI) */}
             </div>
-              </div>
-            </div>
           </div>
         )}
       </main>
