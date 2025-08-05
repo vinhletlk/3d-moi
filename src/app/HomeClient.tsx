@@ -180,6 +180,33 @@ export default function HomeClient() {
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
+  // ---- handlers ----
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    setFileName(file.name);
+    setIsLoading(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const buf = reader.result as ArrayBuffer;
+      setFileContent(buf);
+      setIsLoading(false);
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const handleReset = () => {
+    setResults(null);
+    setFileContent(null);
+    setFileName("");
+    setProgress(0);
+  };
+
   const form = useForm<OrderInput>({
     resolver: zodResolver(OrderInputSchema),
     defaultValues: {
