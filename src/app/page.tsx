@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle, Wand2, Send, ListOrdered, MessageCircleQuestion, ChevronsRight } from "lucide-react";
+import { Upload, LoaderCircle, Ruler, Shell, RefreshCw, Atom, Droplets, Contrast, Percent, Weight, Box, Sparkles, AlertTriangle, Wand2, Send, ListOrdered, MessageCircleQuestion } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { StlParser } from "@/lib/stl-parser";
 import { consultAI } from "@/ai/flows/consult-flow";
@@ -22,18 +22,27 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { processOrder } from "@/ai/flows/order-flow";
 import { Textarea } from "@/components/ui/textarea";
 import Link from 'next/link';
+import { STLViewer } from '@/components/ui/STLViewer';
+
 
 const In3dLogo = () => (
     <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M11.9619 23.6301L14.632 27.2341C15.1161 27.8721 16.1242 27.8721 16.6083 27.2341L19.2783 23.6301" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M15.6201 19.3398V27.4268" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M19.2783 8.36987L16.6083 4.76587C16.1242 4.12787 15.1161 4.12787 14.632 4.76587L11.9619 8.36987" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M15.6201 4.57227V12.6593" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M8.36987 19.2783L4.76587 16.6083C4.12787 16.1242 4.12787 15.1161 4.76587 14.632L8.36987 11.9619" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M4.57227 15.6201H12.6593" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M23.6301 11.9619L27.2341 14.632C27.8721 15.1161 27.8721 16.1242 27.2341 16.6083L23.6301 19.2783" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M27.4268 15.6201H19.3398" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M11.9619 23.6301L14.632 27.2341C15.1161 27.8721 16.1242 27.8721 16.6083 27.2341L19.2783 23.6301" stroke="#0891b2" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M15.6201 19.3398V27.4268" stroke="#0891b2" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M19.2783 8.36987L16.6083 4.76587C16.1242 4.12787 15.1161 4.12787 14.632 4.76587L11.9619 8.36987" stroke="#0891b2" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M15.6201 4.57227V12.6593" stroke="#0891b2" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M8.36987 19.2783L4.76587 16.6083C4.12787 16.1242 4.12787 15.1161 4.76587 14.632L8.36987 11.9619" stroke="#0891b2" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M4.57227 15.6201H12.6593" stroke="#0891b2" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M23.6301 11.9619L27.2341 14.632C27.8721 15.1161 27.8721 16.1242 27.2341 16.6083L23.6301 19.2783" stroke="#0891b2" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M27.4268 15.6201H19.3398" stroke="#0891b2" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
+);
+
+const BackgroundPattern = () => (
+    <>
+        <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] dark:hidden"></div>
+        <div className="absolute inset-0 -z-10 h-full w-full bg-gray-950 bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:16px_16px] hidden dark:block"></div>
+    </>
 );
 
 type PrintTechnology = "fdm" | "resin";
@@ -51,6 +60,7 @@ const COST_PER_GRAM_RESIN = 4000;
 
 export default function Home() {
   const [results, setResults] = useState<CalculationOutput | null>(null);
+  const [fileContent, setFileContent] = useState<ArrayBuffer | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [fileName, setFileName] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -111,6 +121,7 @@ export default function Home() {
     setFileName(file.name);
     setIsLoading(true);
     setResults(null);
+    setFileContent(null);
     setConsultationResult(null);
     setConsultationError(null);
 
@@ -118,9 +129,11 @@ export default function Home() {
     reader.readAsArrayBuffer(file);
     reader.onload = async () => {
       try {
-        const buffer = Buffer.from(reader.result as ArrayBuffer);
+        const buffer = reader.result as ArrayBuffer;
+        setFileContent(buffer);
+
         const parser = new StlParser();
-        const calculationResult = parser.parse(buffer);
+        const calculationResult = parser.parse(Buffer.from(buffer));
 
         setProgress(100);
         setTimeout(() => {
@@ -156,6 +169,7 @@ export default function Home() {
 
   const handleReset = () => {
     setResults(null);
+    setFileContent(null);
     setIsLoading(false);
     setFileName("");
     setProgress(0);
@@ -192,7 +206,6 @@ export default function Home() {
     let supportCost = baseCost * (SUPPORT_COST_FACTOR - 1);
     let totalCost = baseCost + supportCost;
     
-    // To calculate the final weight including supports for display
     let finalWeight = weight * SUPPORT_COST_FACTOR;
 
     return { weight: finalWeight, totalCost, costPerGram, baseCost, supportCost };
@@ -292,8 +305,9 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-gray-50 font-sans text-gray-800 dark:bg-gray-900 dark:text-gray-200">
-      <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-40 border-b dark:border-gray-800">
+    <div className="relative min-h-screen w-full font-sans text-gray-800 dark:text-gray-200">
+      <BackgroundPattern />
+      <header className="bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm sticky top-0 z-40 border-b border-gray-200/80 dark:border-gray-800/80">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
                 <div className="flex items-center space-x-3">
@@ -316,14 +330,14 @@ export default function Home() {
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {!results && !isLoading && (
             <div className="max-w-3xl mx-auto text-center">
-                <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+                <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600">
                     Ước tính chi phí in 3D
                 </h2>
                 <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
-                    Tải lên tệp .STL để nhận ngay báo giá tức thì cho cả in FDM và Resin. Nhanh chóng, chính xác và minh bạch.
+                    Tải lên tệp .STL để nhận ngay báo giá tức thì và xem trước mô hình 3D của bạn.
                 </p>
                 <div 
-                    className="mt-8 flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center transition-colors hover:border-indigo-500/50 hover:bg-indigo-50/50 dark:hover:border-indigo-400/50 dark:hover:bg-gray-800/20"
+                    className="relative mt-8 flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg text-center transition-all duration-300 hover:border-cyan-500/50 hover:bg-cyan-50/50 dark:hover:border-cyan-400/50 dark:hover:bg-gray-800/40"
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
                         e.preventDefault();
@@ -340,10 +354,10 @@ export default function Home() {
                     className="hidden"
                     accept=".stl"
                   />
-                  <div className="mb-4 text-indigo-600 dark:text-indigo-400">
+                  <div className="mb-4 text-cyan-600 dark:text-cyan-400">
                     <Upload className="h-12 w-12" />
                   </div>
-                  <Button onClick={handleUploadClick} size="lg" className="font-bold text-base bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 dark:text-white">
+                  <Button onClick={handleUploadClick} size="lg" className="font-bold text-base text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105">
                     Chọn tệp STL
                   </Button>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">hoặc kéo và thả tệp vào đây</p>
@@ -354,8 +368,8 @@ export default function Home() {
 
         {isLoading && (
             <div className="flex flex-col items-center justify-center space-y-4 p-6 min-h-[300px]">
-              <LoaderCircle className="h-10 w-10 animate-spin text-indigo-600" />
-              <p className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200">Đang xử lý <span className="font-bold text-indigo-600 dark:text-indigo-400">{fileName}</span></p>
+              <LoaderCircle className="h-10 w-10 animate-spin text-cyan-600" />
+              <p className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200">Đang xử lý <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600">{fileName}</span></p>
               <Progress value={progress} className="w-full max-w-sm" />
               <p className="text-sm text-gray-500 dark:text-gray-400">Quá trình này có thể mất một chút thời gian...</p>
             </div>
@@ -364,24 +378,29 @@ export default function Home() {
         {results && !isLoading && (
             <div className="max-w-7xl mx-auto">
               <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-4 overflow-hidden bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-3 shadow-sm">
-                     <Box className="w-8 h-8 text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
+                <div className="flex items-center gap-4 overflow-hidden bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border dark:border-gray-700/80 rounded-lg p-3 shadow-sm">
+                     <Box className="w-8 h-8 text-cyan-600 dark:text-cyan-400 flex-shrink-0" />
                      <div className="flex-grow overflow-hidden">
                          <p className="text-base font-semibold text-gray-800 dark:text-gray-200 truncate" title={fileName}>{fileName}</p>
                          <p className="text-sm text-gray-500 dark:text-gray-400">Đã sẵn sàng để cấu hình và báo giá</p>
                      </div>
                 </div>
-                <Button onClick={handleReset} variant="outline" className="font-semibold dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white">
+                <Button onClick={handleReset} variant="outline" className="font-semibold bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm dark:text-gray-300 dark:border-gray-700/80 dark:hover:bg-gray-800 dark:hover:text-white">
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Tải tệp khác
                 </Button>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                 
-                {/* Left Column */}
-                <div className="lg:col-span-3 space-y-8">
-                  <Card className="shadow-md border-gray-200/80 dark:bg-gray-800/50 dark:border-gray-700/50">
+                <div className="lg:col-span-1 aspect-square relative">
+                    {fileContent && (
+                        <STLViewer fileContent={fileContent} />
+                    )}
+                </div>
+
+                <div className="lg:col-span-1 space-y-8">
+                  <Card className="shadow-md border-gray-200/80 bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm dark:border-gray-700/80">
                     <CardHeader>
                       <CardTitle className="text-xl">Tùy chọn in</CardTitle>
                       <CardDescription>Chọn công nghệ và tinh chỉnh các thông số để phù hợp với nhu cầu của bạn.</CardDescription>
@@ -400,13 +419,13 @@ export default function Home() {
                         >
                           <div>
                             <RadioGroupItem value="fdm" id="fdm" className="peer sr-only" />
-                            <Label htmlFor="fdm" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-indigo-600 [&:has([data-state=checked])]:border-indigo-600 cursor-pointer dark:peer-data-[state=checked]:border-indigo-500">
+                            <Label htmlFor="fdm" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 transition-colors hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-cyan-600 [&:has([data-state=checked])]:border-cyan-600 cursor-pointer dark:peer-data-[state=checked]:border-cyan-500">
                               <Atom className="mb-2 h-6 w-6" /> FDM
                             </Label>
                           </div>
                           <div>
                             <RadioGroupItem value="resin" id="resin" className="peer sr-only" />
-                            <Label htmlFor="resin" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-indigo-600 [&:has([data-state=checked])]:border-indigo-600 cursor-pointer dark:peer-data-[state=checked]:border-indigo-500">
+                            <Label htmlFor="resin" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 transition-colors hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-cyan-600 [&:has([data-state=checked])]:border-cyan-600 cursor-pointer dark:peer-data-[state=checked]:border-cyan-500">
                               <Droplets className="mb-2 h-6 w-6" /> Resin
                             </Label>
                           </div>
@@ -420,7 +439,7 @@ export default function Home() {
                           </Label>
                           <div className="flex items-center space-x-4">
                             <Slider id="infill" value={[infillPercentage]} onValueChange={(value) => { setInfillPercentage(value[0]); setConsultationResult(null); setConsultationError(null); }} max={100} step={5} className="flex-1" />
-                            <span className="text-lg font-bold w-16 text-right text-indigo-600 dark:text-indigo-400">{infillPercentage}%</span>
+                            <span className="text-lg font-bold w-16 text-right text-cyan-600 dark:text-cyan-400">{infillPercentage}%</span>
                           </div>
                         </div>
                       )}
@@ -431,104 +450,14 @@ export default function Home() {
                           </Label>
                           <div className="flex items-center space-x-4">
                             <Slider id="shell" value={[shellThickness]} onValueChange={(value) => { setShellThickness(value[0]); setConsultationResult(null); setConsultationError(null); }} max={10} step={0.1} className="flex-1" />
-                            <span className="text-lg font-bold w-16 text-right text-indigo-600 dark:text-indigo-400">{shellThickness.toFixed(1)} mm</span>
+                            <span className="text-lg font-bold w-16 text-right text-cyan-600 dark:text-cyan-400">{shellThickness.toFixed(1)} mm</span>
                           </div>
                         </div>
                       )}
                     </CardContent>
                   </Card>
-
-                  <Card className="shadow-md border-gray-200/80 dark:bg-gray-800/50 dark:border-gray-700/50">
-                    <CardHeader>
-                        <CardTitle className="text-xl flex items-center gap-2">
-                           <Sparkles className="text-indigo-500" /> Tư vấn với Trợ lý AI
-                        </CardTitle>
-                        <CardDescription>Không chắc chắn về lựa chọn? Hãy hỏi trợ lý AI để có được lời khuyên tối ưu.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                       <Label className="font-medium flex items-center gap-2" htmlFor="user-prompt">
-                          <MessageCircleQuestion className="h-5 w-5" />
-                          Yêu cầu tư vấn cụ thể (tùy chọn)
-                        </Label>
-                        <Textarea
-                          id="user-prompt"
-                          placeholder="Ví dụ: Tôi muốn in mô hình này để làm mô hình trưng bày, chịu được va đập nhẹ. Nên dùng loại vật liệu nào cho tiết kiệm?"
-                          value={userPrompt}
-                          onChange={(e) => setUserPrompt(e.target.value)}
-                          className="bg-white dark:bg-gray-800"
-                        />
-                        <Button onClick={handleConsultation} disabled={isConsulting}>
-                            {isConsulting ? (
-                                <><LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> AI đang phân tích...</>
-                            ) : (
-                                <>Gửi yêu cầu tư vấn</>
-                            )}
-                        </Button>
-
-                        {isConsulting && !consultationResult && (
-                          <div className="flex items-center gap-4 p-4 min-h-[100px] bg-gray-50 dark:bg-gray-900 rounded-lg border dark:border-gray-700">
-                            <LoaderCircle className="h-8 w-8 animate-spin text-indigo-600" />
-                            <div>
-                              <p className="font-semibold text-gray-800 dark:text-gray-200">AI đang phân tích...</p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">Trợ lý ảo đang chuẩn bị lời khuyên cho bạn.</p>
-                            </div>
-                          </div>
-                        )}
-
-                        {consultationError && (
-                          <Card className="bg-destructive/10 border-destructive/50 text-destructive-foreground">
-                              <CardHeader className="pb-2">
-                                  <CardTitle className="text-base flex items-center gap-2"><AlertTriangle /> Lỗi Tư Vấn</CardTitle>
-                              </CardHeader>
-                              <CardContent>
-                                  <p className="text-sm">{consultationError}</p>
-                                  <Button onClick={handleConsultation} variant="destructive" size="sm" className="mt-3">Thử lại</Button>
-                              </CardContent>
-                          </Card>
-                        )}
-
-                        {consultationResult && !isConsulting && (
-                           <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg border border-indigo-200 dark:border-indigo-800">
-                              <h4 className="font-bold text-indigo-800 dark:text-indigo-300 flex items-center gap-2">
-                                <Sparkles className="h-5 w-5" /> Lời khuyên từ AI
-                              </h4>
-                              <div className="prose prose-sm sm:prose-base max-w-none text-gray-700 dark:text-gray-300 mt-2 prose-h3:text-primary prose-strong:text-gray-800 dark:prose-strong:text-gray-200">
-                                <ReactMarkdown>{consultationResult.advice}</ReactMarkdown>
-                              </div>
-                              {canApplySuggestion && (
-                                 <Button onClick={applyAISuggestion} size="sm" className="mt-4">
-                                      <Wand2 className="mr-2 h-4 w-4" /> Áp dụng đề xuất
-                                 </Button>
-                              )}
-                           </div>
-                        )}
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Right Column */}
-                <div className="lg:col-span-2 lg:sticky top-24 space-y-6">
-                   <Card className="shadow-md border-gray-200/80 dark:bg-gray-800/50 dark:border-gray-700/50">
-                    <CardHeader>
-                      <CardTitle className="text-xl">Thông số mô hình</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-2 gap-4">
-                        <div className="bg-gray-100/50 dark:bg-gray-900/50 p-3 rounded-lg">
-                          <Label className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1"><Ruler className="h-4 w-4"/>Thể tích</Label>
-                          <div className="text-xl font-bold text-gray-800 dark:text-gray-200 mt-1">
-                            {results.volume.toFixed(2)} <span className="text-sm font-normal text-gray-500 dark:text-gray-400">cm³</span>
-                          </div>
-                        </div>
-                        <div className="bg-gray-100/50 dark:bg-gray-900/50 p-3 rounded-lg">
-                          <Label className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1"><Shell className="h-4 w-4"/>Bề mặt</Label>
-                          <div className="text-xl font-bold text-gray-800 dark:text-gray-200 mt-1">
-                            {results.surfaceArea.toFixed(2)} <span className="text-sm font-normal text-gray-500 dark:text-gray-400">cm²</span>
-                          </div>
-                        </div>
-                    </CardContent>
-                   </Card>
-
-                   <Card className="shadow-lg border-indigo-200 dark:border-indigo-900 bg-white dark:bg-gray-800">
+                  
+                   <Card className="shadow-lg border-cyan-200/80 dark:border-cyan-900/80 bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm">
                       <CardHeader>
                          <CardTitle className="text-xl">Báo giá ước tính</CardTitle>
                       </CardHeader>
@@ -552,13 +481,13 @@ export default function Home() {
                         <div className="border-t border-dashed my-3 dark:border-gray-700"></div>
                         <div className="flex justify-between items-center text-gray-900 dark:text-white pt-2">
                             <span className="text-lg font-bold">Tổng chi phí</span>
-                            <span className="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">{formatCurrency(totalCost)}</span>
+                            <span className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600">{formatCurrency(totalCost)}</span>
                         </div>
                       </CardContent>
                       <CardFooter className="flex-col items-stretch gap-3">
                         <Dialog open={isOrderDialogOpen} onOpenChange={setIsOrderDialogOpen}>
                           <DialogTrigger asChild>
-                              <Button className="w-full font-semibold bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 dark:text-white" size="lg">
+                              <Button className="w-full font-semibold text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105" size="lg">
                                   <Send className="mr-2 h-4 w-4" />
                                   Tiến hành Đặt hàng
                               </Button>
@@ -594,7 +523,7 @@ export default function Home() {
                                           <DialogClose asChild>
                                               <Button type="button" variant="outline" className="dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">Hủy</Button>
                                           </DialogClose>
-                                          <Button type="submit" disabled={isSubmittingOrder} className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 dark:text-white">
+                                          <Button type="submit" disabled={isSubmittingOrder} className="text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700">
                                               {isSubmittingOrder && <LoaderCircle className="animate-spin mr-2" />}
                                               Xác nhận Đặt hàng
                                           </Button>
@@ -608,11 +537,80 @@ export default function Home() {
                 </div>
 
               </div>
+              
+              <div className="mt-8">
+                <Card className="shadow-md border-gray-200/80 bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm dark:border-gray-700/80">
+                  <CardHeader>
+                      <CardTitle className="text-xl flex items-center gap-2">
+                          <Sparkles className="text-cyan-500" /> Tư vấn với Trợ lý AI
+                      </CardTitle>
+                      <CardDescription>Không chắc chắn về lựa chọn? Hãy hỏi trợ lý AI để có được lời khuyên tối ưu.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                      <Label className="font-medium flex items-center gap-2" htmlFor="user-prompt">
+                        <MessageCircleQuestion className="h-5 w-5" />
+                        Yêu cầu tư vấn cụ thể (tùy chọn)
+                      </Label>
+                      <Textarea
+                        id="user-prompt"
+                        placeholder="Ví dụ: Tôi muốn in mô hình này để làm mô hình trưng bày, chịu được va đập nhẹ..."
+                        value={userPrompt}
+                        onChange={(e) => setUserPrompt(e.target.value)}
+                        className="bg-white/80 dark:bg-gray-800/80"
+                      />
+                      <Button onClick={handleConsultation} disabled={isConsulting} className="text-white bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 dark:from-gray-600 dark:to-gray-700 dark:hover:from-gray-700 dark:hover:to-gray-800">
+                          {isConsulting ? (
+                              <><LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> AI đang phân tích...</>
+                          ) : (
+                              <>Gửi yêu cầu tư vấn</>
+                          )}
+                      </Button>
+
+                      {isConsulting && !consultationResult && (
+                        <div className="flex items-center gap-4 p-4 min-h-[100px] bg-gray-50 dark:bg-gray-900 rounded-lg border dark:border-gray-700">
+                          <LoaderCircle className="h-8 w-8 animate-spin text-cyan-600" />
+                          <div>
+                            <p className="font-semibold text-gray-800 dark:text-gray-200">AI đang phân tích...</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Trợ lý ảo đang chuẩn bị lời khuyên cho bạn.</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {consultationError && (
+                        <Card className="bg-destructive/10 border-destructive/50 text-destructive-foreground">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-base flex items-center gap-2"><AlertTriangle /> Lỗi Tư Vấn</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-sm">{consultationError}</p>
+                                <Button onClick={handleConsultation} variant="destructive" size="sm" className="mt-3">Thử lại</Button>
+                            </CardContent>
+                        </Card>
+                      )}
+
+                      {consultationResult && !isConsulting && (
+                          <div className="bg-cyan-50 dark:bg-cyan-900/20 p-4 rounded-lg border border-cyan-200 dark:border-cyan-800">
+                            <h4 className="font-bold text-cyan-800 dark:text-cyan-300 flex items-center gap-2">
+                              <Sparkles className="h-5 w-5" /> Lời khuyên từ AI
+                            </h4>
+                            <div className="prose prose-sm sm:prose-base max-w-none text-gray-700 dark:text-gray-300 mt-2 prose-strong:text-gray-800 dark:prose-strong:text-gray-200">
+                              <ReactMarkdown>{consultationResult.advice}</ReactMarkdown>
+                            </div>
+                            {canApplySuggestion && (
+                                <Button onClick={applyAISuggestion} size="sm" className="mt-4 text-white bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600">
+                                    <Wand2 className="mr-2 h-4 w-4" /> Áp dụng đề xuất
+                                </Button>
+                            )}
+                          </div>
+                      )}
+                  </CardContent>
+                </Card>
+              </div>
             </div>
         )}
       </main>
 
-      <footer className="bg-white/80 dark:bg-gray-900/80 border-t mt-auto dark:border-gray-800">
+      <footer className="bg-white/80 dark:bg-gray-950/80 border-t mt-auto border-gray-200/80 dark:border-gray-800/80">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
               © {new Date().getFullYear()} in3D. All rights reserved.
           </div>
